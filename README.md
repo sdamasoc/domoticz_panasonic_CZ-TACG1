@@ -1,5 +1,5 @@
 # Domoticz python plugin for Panasonic CZ-TACG1 wifi adapter
-A Python plugin for Domoticz to communicate with Panasonic Cloud Confort throught CZ-TACG1 WiFi adapter
+A Python plugin for Domoticz to communicate with Panasonic Cloud Comfort through CZ-TACG1 WiFi adapter
 
 # Getting started
 If you don't have git:
