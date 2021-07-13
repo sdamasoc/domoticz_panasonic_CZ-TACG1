@@ -97,6 +97,7 @@ class PanasonicCZTACG1Plugin:
 
                     Domoticz.Log("Device " + devicename + " created (DeviceID=" + deviceid + ").")
 
+        onHeartbeat()
         DumpConfigToLog()
 
         Domoticz.Heartbeat(int(Parameters["Mode1"]))
