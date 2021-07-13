@@ -10,14 +10,14 @@
         <param field="Password" label="Password" width="200px" required="true" default=""/>
         <param field="Mode1" label="Update every x seconds" width="75px">
             <options>
-                <option label="30" value="3" />
-                <option label="60" value="6" default="true" />
-                <option label="90" value="9" />
-                <option label="120" value="12" />
-                <option label="150" value="15" />
-                <option label="180" value="18" />
-                <option label="210" value="21" />
-                <option label="240" value="24" />
+                <option label="30" value="30" />
+                <option label="60" value="60" default="true" />
+                <option label="90" value="90" />
+                <option label="120" value="120" />
+                <option label="150" value="150" />
+                <option label="180" value="180" />
+                <option label="210" value="210" />
+                <option label="240" value="240" />
             </options>
         </param>
         <param field="Mode2" label="Debug" width="75px">
