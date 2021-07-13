@@ -149,6 +149,7 @@ class PanasonicCZTACG1Plugin:
         Domoticz.Debug("onHeartbeat started...")
         deviceid = None
         devicejson = None
+        power = 0
         for x in Devices:
             if (deviceid != Devices[x].DeviceID):
                 deviceid = Devices[x].DeviceID
@@ -163,7 +164,9 @@ class PanasonicCZTACG1Plugin:
                 else:
                     value = str(float(devicejson['parameters']['outTemperature']))
             elif ("[Power]" in Devices[x].Name):
-                value = str(float(devicejson['parameters']['operate']))
+                power = int(devicejson['parameters']['operate'])
+                value = str(power * 100)
+
             elif ("[Mode]" in Devices[x].Name):
                 operationmode = int(devicejson['parameters']['operationMode'])
                 value = str(((operationmode + 1) * 10))
@@ -173,7 +176,7 @@ class PanasonicCZTACG1Plugin:
 
             # update value only if value has changed
             if (Devices[x].sValue != value):
-                Devices[x].Update(nValue=0, sValue=value)
+                Devices[x].Update(nValue=power, sValue=value)
 
         # Domoticz.Debug("Device ID:       '" + str(Devices[x].ID) + "'")
         # Domoticz.Debug("Device Name:     '" + Devices[x].Name + "'")
