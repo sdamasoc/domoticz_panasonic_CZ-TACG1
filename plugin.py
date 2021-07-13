@@ -33,10 +33,11 @@
 import requests
 import json
 import Domoticz
-from datetime import datetime
+from datetime import date
 
 # global var token
 token = None
+api_version = "1.12.0"
 
 
 class PanasonicCZTACG1Plugin:
@@ -64,9 +65,7 @@ class PanasonicCZTACG1Plugin:
                     devicename = device['deviceName']
                     deviceid = device['deviceGuid']
 
-                    # get device infos
-                    devicejson = getDeviceById(deviceid)
-
+                    # TODO check if device is support before creation ("airSwingLR":true,"nanoe":false,"autoMode":true,"autoSwingUD":false,"ecoNavi":false,...)
                     Domoticz.Device(Name=devicename + "[Power]", Unit=(nbdevices := nbdevices + 1), Image=16,
                                     TypeName="Switch", Used=1, DeviceID=deviceid).Create()
 
@@ -92,8 +91,42 @@ class PanasonicCZTACG1Plugin:
                     Domoticz.Device(Name=devicename + "[Fan Speed]", Unit=(nbdevices := nbdevices + 1),
                                     TypeName="Selector Switch", Image=7, Options=Options, Used=1,
                                     DeviceID=deviceid).Create()
+                    # ecoMode
+                    Options = {"LevelActions": "|||||||", "LevelNames": "|Auto|Powerful|Quiet",
+                               "LevelOffHidden": "true", "SelectorStyle": "1"}
+                    Domoticz.Device(Name=devicename + "[Eco Mode]", Unit=(nbdevices := nbdevices + 1),
+                                    TypeName="Selector Switch", Image=7, Options=Options, Used=1,
+                                    DeviceID=deviceid).Create()
+
+                    # airSwingUD => 0,3,2,4,1 (weird)
+                    Options = {"LevelActions": "|||||||", "LevelNames": "Up|Down|Mid|UpMid|DownMid",
+                               "LevelOffHidden": "true", "SelectorStyle": "1"}
+                    Domoticz.Device(Name=devicename + "[Air Swing]", Unit=(nbdevices := nbdevices + 1),
+                                    TypeName="Selector Switch", Image=7, Options=Options, Used=1,
+                                    DeviceID=deviceid).Create()
 
                     # TODO add other switches?
+                    """"
+                     "parameters":{
+                      "ecoFunctionData":1,      => TODO
+                      "airSwingLR":2,           => TODO
+                      "nanoe":1,                => TODO
+                      "ecoNavi":1,              => TODO
+                      "ecoMode":2,              => OK
+                      "operationMode":2,        => OK
+                      "fanAutoMode":2,          => TODO
+                      "temperatureSet":24.0,    => OK
+                      "fanSpeed":1,             => OK
+                      "iAuto":1,                => TODO
+                      "airQuality":0,           => TODO
+                      "insideTemperature":23,   => OK
+                      "outTemperature":126,     => OK
+                      "operate":0,              => OK
+                      "airDirection":1,         => TODO
+                      "actualNanoe":1,          => TODO
+                      "airSwingUD":0            => OK
+                   }
+                    """"
 
                     Domoticz.Log("Device " + devicename + " created (DeviceID=" + deviceid + ").")
 
@@ -136,6 +169,12 @@ class PanasonicCZTACG1Plugin:
                 elif ("[Fan Speed]" in Devices[Unit].Name):
                     fanspeed = (Level / 10) - 1
                     updateDeviceId(Devices[Unit].DeviceID, "fanSpeed", int(fanspeed))
+                elif ("[Eco Mode]" in Devices[Unit].Name):
+                    ecomode = (Level / 10) - 1
+                    updateDeviceId(Devices[Unit].DeviceID, "ecoMode", int(ecomode))
+                elif ("[Air Swing]" in Devices[Unit].Name):
+                    airswing = (Level / 10) - 1
+                    updateDeviceId(Devices[Unit].DeviceID, "airSwingUD", int(airswing))
                 Devices[Unit].Update(nValue=self.powerOn, sValue=str(Level))
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
@@ -159,20 +198,25 @@ class PanasonicCZTACG1Plugin:
             elif ("[Room Temp]" in Devices[x].Name):
                 value = str(float(devicejson['parameters']['insideTemperature']))
             elif ("[Outdoor Temp]" in Devices[x].Name):
-                if (float(devicejson['parameters']['outTemperature']) > 50):
+                if (float(devicejson['parameters']['outTemperature']) > 100):
                     value = "--"
                 else:
                     value = str(float(devicejson['parameters']['outTemperature']))
             elif ("[Power]" in Devices[x].Name):
                 power = int(devicejson['parameters']['operate'])
                 value = str(power * 100)
-
             elif ("[Mode]" in Devices[x].Name):
                 operationmode = int(devicejson['parameters']['operationMode'])
-                value = str(((operationmode + 1) * 10))
+                value = str((operationmode + 1) * 10)
             elif ("[Fan Speed]" in Devices[x].Name):
                 fanspeed = int(devicejson['parameters']['fanSpeed'])
-                value = str(((fanspeed + 1) * 10))
+                value = str((fanspeed + 1) * 10)
+            elif ("[Eco Mode]" in Devices[x].Name):
+                ecomode = int(devicejson['parameters']['ecoMode'])
+                value = str((ecomode + 1) * 10)
+            elif ("[Air Swing]" in Devices[x].Name):
+                airswing = int(devicejson['parameters']['airSwingUD'])
+                value = str((airswing + 1) * 10)
 
             # update value only if value has changed
             if (Devices[x].sValue != value):
@@ -185,40 +229,50 @@ class PanasonicCZTACG1Plugin:
         # Domoticz.Debug("Device LastLevel: " + str(Devices[x].LastLevel))
         Domoticz.Debug("onHeartbeat ended.")
 
+
 global _plugin
 _plugin = PanasonicCZTACG1Plugin()
+
 
 def onStart():
     global _plugin
     _plugin.onStart()
 
+
 def onStop():
     global _plugin
     _plugin.onStop()
+
 
 def onConnect(Connection, Status, Description):
     global _plugin
     _plugin.onConnect(Connection, Status, Description)
 
+
 def onMessage(Connection, Data):
     global _plugin
     _plugin.onMessage(Connection, Data)
+
 
 def onCommand(Unit, Command, Level, Hue):
     global _plugin
     _plugin.onCommand(Unit, Command, Level, Hue)
 
+
 def onNotification(Name, Subject, Text, Status, Priority, Sound, ImageFile):
     global _plugin
     _plugin.onNotification(Name, Subject, Text, Status, Priority, Sound, ImageFile)
+
 
 def onDisconnect(Connection):
     global _plugin
     _plugin.onDisconnect(Connection)
 
+
 def onHeartbeat():
     global _plugin
     _plugin.onHeartbeat()
+
 
 ############################
 # Generic helper functions #
@@ -226,12 +280,13 @@ def onHeartbeat():
 
 # call the api to get a token
 def getToken():
+    global api_version
     url = Parameters["Address"] + "/auth/login"
     payload = "{\"language\": 0,\"loginId\": \"" + Parameters["Username"] + "\",\"password\": \"" + Parameters[
         "Password"] + "\"}"
     headers = {
         'X-APP-TYPE': '1',
-        'X-APP-VERSION': '1.10.0',
+        'X-APP-VERSION': api_version,
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'User-Agent': 'G-RAC'
@@ -241,14 +296,16 @@ def getToken():
     res = json.loads(response.text)
     return res["uToken"]
 
+
 # call the api to get device list
 def getDevices():
     global token
+    global api_version
     url = Parameters["Address"] + "/device/group/"
     payload = ""
     headers = {
         'X-APP-TYPE': '1',
-        'X-APP-VERSION': '1.10.0',
+        'X-APP-VERSION': api_version,
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'X-User-Authorization': token,
@@ -263,14 +320,16 @@ def getDevices():
         return json.loads(response.text)
     return json.loads(response.text)
 
+
 # call the api to get device infos
 def getDeviceById(deviceid):
     global token
+    global api_version
     url = Parameters["Address"] + "/deviceStatus/now/" + deviceid
     payload = ""
     headers = {
         'X-APP-TYPE': '1',
-        'X-APP-VERSION': '1.10.0',
+        'X-APP-VERSION': api_version,
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'X-User-Authorization': token,
@@ -284,16 +343,18 @@ def getDeviceById(deviceid):
     else:
         return json.loads(response.text)
 
+
 # call the api to update device parameter
 def updateDeviceId(deviceid, parameterName, parameterValue):
     global token
+    global api_version
     Domoticz.Log("updating DeviceId=" + deviceid + ", " + parameterName + "=" + str(parameterValue) + "...")
     url = Parameters["Address"] + "/deviceStatus/control/"
     payload = "{\"deviceGuid\": \"" + deviceid + "\", \"parameters\": { \"" + parameterName + "\": " + str(
         parameterValue) + " }}"
     headers = {
         'X-APP-TYPE': '1',
-        'X-APP-VERSION': '1.10.0',
+        'X-APP-VERSION': api_version,
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'X-User-Authorization': token,
@@ -306,6 +367,7 @@ def updateDeviceId(deviceid, parameterName, parameterValue):
         return updateDeviceId(deviceid, parameterName, parameterValue)
     else:
         return json.loads(response.text)
+
 
 # dumps the http response to the log
 def DumpHTTPResponseToLog(httpResp, level=0):
@@ -325,6 +387,7 @@ def DumpHTTPResponseToLog(httpResp, level=0):
             Domoticz.Debug(indentStr + "['" + x + "']")
     else:
         Domoticz.Debug(indentStr + ">'" + x + "':'" + str(httpResp[x]) + "'")
+
 
 # Dumps the config to debug log
 def DumpConfigToLog():
