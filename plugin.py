@@ -106,27 +106,6 @@ class PanasonicCZTACG1Plugin:
                                     DeviceID=deviceid).Create()
 
                     # TODO add other switches?
-                    """"
-                     "parameters":{
-                      "ecoFunctionData":1,      => TODO
-                      "airSwingLR":2,           => TODO
-                      "nanoe":1,                => TODO
-                      "ecoNavi":1,              => TODO
-                      "ecoMode":2,              => OK
-                      "operationMode":2,        => OK
-                      "fanAutoMode":2,          => TODO
-                      "temperatureSet":24.0,    => OK
-                      "fanSpeed":1,             => OK
-                      "iAuto":1,                => TODO
-                      "airQuality":0,           => TODO
-                      "insideTemperature":23,   => OK
-                      "outTemperature":126,     => OK
-                      "operate":0,              => OK
-                      "airDirection":1,         => TODO
-                      "actualNanoe":1,          => TODO
-                      "airSwingUD":0            => OK
-                   }
-                    """"
 
                     Domoticz.Log("Device " + devicename + " created (DeviceID=" + deviceid + ").")
 
