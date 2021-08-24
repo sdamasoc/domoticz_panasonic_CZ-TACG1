@@ -36,7 +36,9 @@ If you run Linux and the plugin does not show up in the hardware list, you may h
 https://www.domoticz.com/wiki/Using_Python_plugins
 
 # Requirements
-You need a panasonic id associated with your devices to be able to use this plugin:
+- This plugin uses the python requests and simplejson modules to send and receive json content to panasonic cloud. If you don't them execute `pip3 install requests` and `pip3 install simplejson` as root to install them.
+
+- You need a panasonic id associated with your devices to be able to use this plugin:
 1. Create a new panasonic account here: [Panasonic ID Registration](https://csapl.pcpf.panasonic.com/Account/Register001?lang=en)
 2. Verify email using the link sent to the email id specified
 3. Sign into the Panasonic Comfort Cloud app on your smart device using the newly created Panasonic ID
