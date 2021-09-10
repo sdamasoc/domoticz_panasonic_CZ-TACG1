@@ -37,7 +37,7 @@ from datetime import date
 
 # global var token
 token = None
-api_version = "1.12.0"
+api_version = "1.13.0"
 
 
 class PanasonicCZTACG1Plugin:
