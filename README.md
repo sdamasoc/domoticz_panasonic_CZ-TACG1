@@ -36,7 +36,8 @@ If you run Linux and the plugin does not show up in the hardware list, you may h
 https://www.domoticz.com/wiki/Using_Python_plugins
 
 # Requirements
-- This plugin uses the python requests and simplejson modules to send and receive json content to panasonic cloud. If you don't them execute `pip3 install requests` and `pip3 install simplejson` as root to install them.
+- This plugin requires python v3.8 (or greater)
+- It uses python requests and simplejson modules to send and receive json content to panasonic cloud. If you don't have them execute `pip3 install requests` and `pip3 install simplejson` as root to install.
 
 - You need a panasonic id associated with your devices to be able to use this plugin:
 1. Create a new panasonic account here: [Panasonic ID Registration](https://csapl.pcpf.panasonic.com/Account/Register001?lang=en)
