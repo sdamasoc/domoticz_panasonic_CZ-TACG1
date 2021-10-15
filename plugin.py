@@ -66,42 +66,50 @@ class PanasonicCZTACG1Plugin:
                     deviceid = device['deviceGuid']
 
                     # TODO check if device is support before creation ("airSwingLR":true,"nanoe":false,"autoMode":true,"autoSwingUD":false,"ecoNavi":false,...)
-                    Domoticz.Device(Name=devicename + "[Power]", Unit=(nbdevices := nbdevices + 1), Image=16,
+                    nbdevices = nbdevices + 1
+                    Domoticz.Device(Name=devicename + "[Power]", Unit=nbdevices, Image=16,
                                     TypeName="Switch", Used=1, DeviceID=deviceid).Create()
 
-                    Domoticz.Device(Name=devicename + "[Room Temp]", Unit=(nbdevices := nbdevices + 1),
+                    nbdevices = nbdevices + 1
+                    Domoticz.Device(Name=devicename + "[Room Temp]", Unit=nbdevices,
                                     TypeName="Temperature", Used=1, DeviceID=deviceid).Create()
 
-                    Domoticz.Device(Name=devicename + "[Outdoor Temp]", Unit=(nbdevices := nbdevices + 1),
+                    nbdevices = nbdevices + 1
+                    Domoticz.Device(Name=devicename + "[Outdoor Temp]", Unit=nbdevices,
                                     TypeName="Temperature", Used=1, DeviceID=deviceid).Create()
 
-                    Domoticz.Device(Name=devicename + "[Target temp]", Unit=(nbdevices := nbdevices + 1), Type=242,
+                    nbdevices = nbdevices + 1
+                    Domoticz.Device(Name=devicename + "[Target temp]", Unit=nbdevices, Type=242,
                                     Subtype=1, Image=16, Used=1, DeviceID=deviceid).Create()
 
                     # operationMode
                     Options = {"LevelActions": "|||||", "LevelNames": "|Auto|Dry|Cool|Heat|Fan",
                                "LevelOffHidden": "true", "SelectorStyle": "1"}
-                    Domoticz.Device(Name=devicename + "[Mode]", Unit=(nbdevices := nbdevices + 1),
+                    nbdevices = nbdevices + 1
+                    Domoticz.Device(Name=devicename + "[Mode]", Unit=nbdevices,
                                     TypeName="Selector Switch", Image=16, Options=Options, Used=1,
                                     DeviceID=deviceid).Create()
 
                     # fanSpeed
                     Options = {"LevelActions": "|||||||", "LevelNames": "|Auto|Low|LowMid|Mid|HighMid|High",
                                "LevelOffHidden": "true", "SelectorStyle": "1"}
-                    Domoticz.Device(Name=devicename + "[Fan Speed]", Unit=(nbdevices := nbdevices + 1),
+                    nbdevices = nbdevices + 1
+                    Domoticz.Device(Name=devicename + "[Fan Speed]", Unit=nbdevices,
                                     TypeName="Selector Switch", Image=7, Options=Options, Used=1,
                                     DeviceID=deviceid).Create()
                     # ecoMode
                     Options = {"LevelActions": "|||||||", "LevelNames": "|Auto|Powerful|Quiet",
                                "LevelOffHidden": "true", "SelectorStyle": "1"}
-                    Domoticz.Device(Name=devicename + "[Eco Mode]", Unit=(nbdevices := nbdevices + 1),
+                    nbdevices = nbdevices + 1
+                    Domoticz.Device(Name=devicename + "[Eco Mode]", Unit=nbdevices,
                                     TypeName="Selector Switch", Image=7, Options=Options, Used=1,
                                     DeviceID=deviceid).Create()
 
                     # airSwingUD => 0,3,2,4,1 (weird)
                     Options = {"LevelActions": "|||||||", "LevelNames": "Up|Down|Mid|UpMid|DownMid",
                                "LevelOffHidden": "true", "SelectorStyle": "1"}
-                    Domoticz.Device(Name=devicename + "[Air Swing]", Unit=(nbdevices := nbdevices + 1),
+                    nbdevices = nbdevices + 1
+                    Domoticz.Device(Name=devicename + "[Air Swing]", Unit=nbdevices,
                                     TypeName="Selector Switch", Image=7, Options=Options, Used=1,
                                     DeviceID=deviceid).Create()
 
