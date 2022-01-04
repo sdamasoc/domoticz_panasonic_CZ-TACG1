@@ -3,7 +3,15 @@
 # Author: sdamasoc
 #
 """
-<plugin key="CZ-TACG1" name="Panasonic Airco (CZ-TACG1)" author="sdamasoc" version="1.0.0" externallink="https://aircon.panasonic.com/connectivity/consumer/comfort_cloud_app.html">
+<plugin key="CZ-TACG1" name="Panasonic Airco (CZ-TACG1)" author="sdamasoc" version="1.1.0" externallink="https://aircon.panasonic.com/connectivity/consumer/comfort_cloud_app.html">
+    <description>
+        <h2>Panasonic Cloud Control Plugin</h2><br/>
+        This is a Domoticz python plugin to communicate through Panasonic Cloud Comfort API.
+        <h3>Configuration</h3>
+        <p>Just enter your Panasonic Cloud Comfort username and password and everything will be detected automatically.</p>
+        <p>You can also configure the update interval to not overload http requests.</p>
+        <p>The API version can also be given when an API update is available.</p>
+    </description>
     <params>
         <param field="Address" label="IP Address" width="200px" required="true" default="https://accsmart.panasonic.com"/>
         <param field="Username" label="Username" width="200px" required="true" default=""/>
@@ -26,23 +34,25 @@
                 <option label="False" value="Normal"  default="true" />
             </options>
         </param>
-        
+        <param field="Mode3" label="API Version" width="60px" required="true" default="1.14.0"/>
     </params>
 </plugin>
 """
 import requests
 import json
 import Domoticz
+import time
 from datetime import date
 
 # global var token
 token = None
-api_version = "1.14.0"
+
 
 
 class PanasonicCZTACG1Plugin:
     enabled = True
     powerOn = 0
+    last_update = 0
 
     def __init__(self):
         return
@@ -120,8 +130,6 @@ class PanasonicCZTACG1Plugin:
         onHeartbeat()
         DumpConfigToLog()
 
-        Domoticz.Heartbeat(int(Parameters["Mode1"]))
-
         Domoticz.Log("onStart end")
 
     def onStop(self):
@@ -173,6 +181,11 @@ class PanasonicCZTACG1Plugin:
 
     def onHeartbeat(self):
         Domoticz.Debug("onHeartbeat started...")
+        update_interval = int(Parameters["Mode1"])
+        Domoticz.Debug("last update interval = " + str(time.time() - self.last_update) + ", update_interval = " + str(update_interval))
+        if time.time() - self.last_update < update_interval:
+            Domoticz.Debug("update interval not reached")
+            return
         deviceid = None
         devicejson = None
         power = 0
@@ -214,6 +227,7 @@ class PanasonicCZTACG1Plugin:
         # Domoticz.Debug("Device nValue:    " + str(Devices[x].nValue))
         # Domoticz.Debug("Device sValue:   '" + Devices[x].sValue + "'")
         # Domoticz.Debug("Device LastLevel: " + str(Devices[x].LastLevel))
+        self.last_update = time.time()
         Domoticz.Debug("onHeartbeat ended.")
 
 
@@ -267,7 +281,7 @@ def onHeartbeat():
 
 # call the api to get a token
 def getToken():
-    global api_version
+    api_version = Parameters["Mode3"]
     url = Parameters["Address"] + "/auth/login"
     payload = "{\"language\": 0,\"loginId\": \"" + Parameters["Username"] + "\",\"password\": \"" + Parameters[
         "Password"] + "\"}"
@@ -287,7 +301,7 @@ def getToken():
 # call the api to get device list
 def getDevices():
     global token
-    global api_version
+    api_version = Parameters["Mode3"]
     url = Parameters["Address"] + "/device/group/"
     payload = ""
     headers = {
@@ -311,7 +325,7 @@ def getDevices():
 # call the api to get device infos
 def getDeviceById(deviceid):
     global token
-    global api_version
+    api_version = Parameters["Mode3"]
     url = Parameters["Address"] + "/deviceStatus/now/" + deviceid
     payload = ""
     headers = {
@@ -334,7 +348,7 @@ def getDeviceById(deviceid):
 # call the api to update device parameter
 def updateDeviceId(deviceid, parameterName, parameterValue):
     global token
-    global api_version
+    api_version = Parameters["Mode3"]
     Domoticz.Log("updating DeviceId=" + deviceid + ", " + parameterName + "=" + str(parameterValue) + "...")
     url = Parameters["Address"] + "/deviceStatus/control/"
     payload = "{\"deviceGuid\": \"" + deviceid + "\", \"parameters\": { \"" + parameterName + "\": " + str(
