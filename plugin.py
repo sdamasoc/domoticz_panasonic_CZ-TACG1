@@ -58,10 +58,14 @@ class PanasonicCZTACG1Plugin:
         return
 
     def onStart(self):
-        Domoticz.Log("onStart called")
+        Domoticz.Debug("onStart called")
 
         if Parameters["Mode2"] == "Debug":
-            Domoticz.Debugging(1)
+            # 0: None. All Python and framework debugging is disabled.
+            # 1: All. Very verbose log from plugin framework and plugin debug messages.
+            # 2: Mask value. Shows messages from Plugin Domoticz.Debug() calls only.
+            # https://www.domoticz.com/wiki/Developing_a_Python_plugin#C.2B.2B_Callable_API 
+            Domoticz.Debugging(2)
 
         # get devices list
         panasonic_devices = getDevices()
@@ -130,20 +134,20 @@ class PanasonicCZTACG1Plugin:
         onHeartbeat()
         DumpConfigToLog()
 
-        Domoticz.Log("onStart end")
+        Domoticz.Debug("onStart end")
 
     def onStop(self):
-        Domoticz.Log("onStop called")
+        Domoticz.Debug("onStop called")
 
     def onConnect(self, Connection, Status, Description):
-        Domoticz.Log("onConnect called, Status=" + str(Status))
+        Domoticz.Debug("onConnect called, Status=" + str(Status))
 
     def onMessage(self, Connection, Data):
-        Domoticz.Log("onMessage called")
+        Domoticz.Debug("onMessage called")
         DumpHTTPResponseToLog(Data)
 
     def onCommand(self, Unit, Command, Level, Hue):
-        Domoticz.Debug("Command received for device Name=" + Devices[Unit].Name + "(deviceId=" + Devices[
+        Domoticz.Log("Command received for device Name=" + Devices[Unit].Name + "(deviceId=" + Devices[
             Unit].DeviceID + ") U=" + str(Unit) + " C=" + str(Command) + " L=" + str(Level) + " H=" + str(Hue))
 
         if (Command == "On"):
@@ -177,12 +181,12 @@ class PanasonicCZTACG1Plugin:
             Priority) + "," + Sound + "," + ImageFile)
 
     def onDisconnect(self, Connection):
-        Domoticz.Log("Connection " + Connection.Name + " closed.")
+        Domoticz.Debug("Connection " + Connection.Name + " closed.")
 
     def onHeartbeat(self):
         Domoticz.Debug("onHeartbeat started...")
         update_interval = int(Parameters["Mode1"])
-        Domoticz.Debug("last update interval = " + str(time.time() - self.last_update) + ", update_interval = " + str(update_interval))
+        Domoticz.Debug("interval since last update = " + str(time.time() - self.last_update) + ", update_interval = " + str(update_interval))
         if time.time() - self.last_update < update_interval:
             Domoticz.Debug("update interval not reached")
             return
@@ -293,7 +297,7 @@ def getToken():
         'User-Agent': 'G-RAC'
     }
     response = requests.request("POST", url, headers=headers, data=payload)
-    Domoticz.Debug("getToken=" + response.text)
+    Domoticz.Log("getToken=" + response.text)
     res = json.loads(response.text)
     return res["uToken"]
 
@@ -313,7 +317,7 @@ def getDevices():
         'User-Agent': 'G-RAC'
     }
     response = requests.request("GET", url, headers=headers, data=payload)
-    Domoticz.Debug("getDevices=" + response.text)
+    Domoticz.Log("getDevices=" + response.text)
     if ("Token expires" in response.text):
         token = getToken()
         return getDevices()
@@ -337,7 +341,7 @@ def getDeviceById(deviceid):
         'User-Agent': 'G-RAC'
     }
     response = requests.request("GET", url, headers=headers, data=payload)
-    Domoticz.Debug("getDeviceById=" + response.text)
+    Domoticz.Log("getDeviceById=" + response.text)
     if ("Token expires" in response.text):
         token = getToken()
         return getDeviceById(deviceid)
@@ -362,7 +366,7 @@ def updateDeviceId(deviceid, parameterName, parameterValue):
         'User-Agent': 'G-RAC'
     }
     response = requests.request("POST", url, headers=headers, data=payload)
-    Domoticz.Debug("updateDeviceId=" + response.text)
+    Domoticz.Log("updateDeviceId=" + response.text)
     if ("Token expires" in response.text):
         token = getToken()
         return updateDeviceId(deviceid, parameterName, parameterValue)
