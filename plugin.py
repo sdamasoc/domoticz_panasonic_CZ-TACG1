@@ -34,7 +34,7 @@
                 <option label="False" value="Normal"  default="true" />
             </options>
         </param>
-        <param field="Mode3" label="API Version" width="60px" required="true" default="1.14.0"/>
+        <param field="Mode3" label="API Version" width="60px" required="true" default="1.15.0"/>
     </params>
 </plugin>
 """
