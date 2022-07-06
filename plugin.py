@@ -199,7 +199,7 @@ class PanasonicCZTACG1Plugin:
                 devicejson = getDeviceById(deviceid)
             if (devicejson.get('parameters') is None):
                 # the device is offline
-                Domoticz.Log("The device " + deviceid + " return an error (code=" + devicejson.get('code') + ", message=" + devicejson.get('message') + ")")
+                Domoticz.Log("The device " + deviceid + " return an error (code=" + str(devicejson.get('code')) + ", message=" + str(devicejson.get('message')) + ")")
                 continue
             if ("[Target temp]" in Devices[x].Name):
                 value = str(float(devicejson['parameters']['temperatureSet']))
