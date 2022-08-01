@@ -294,9 +294,9 @@ def getToken():
     payload = "{\"language\": 0,\"loginId\": \"" + Parameters["Username"] + "\",\"password\": \"" + Parameters[
         "Password"] + "\"}"
     headers = {
-        'X-APP-TYPE': '1',
+        'X-APP-TYPE': '0',
         'X-APP-VERSION': api_version,
-        'Accept': 'application/json',
+        'Accept': 'application/json; charset=UTF-8',
         'Content-Type': 'application/json',
         'User-Agent': 'G-RAC'
     }
@@ -313,9 +313,9 @@ def getDevices():
     url = Parameters["Address"] + "/device/group/"
     payload = ""
     headers = {
-        'X-APP-TYPE': '1',
+        'X-APP-TYPE': '0',
         'X-APP-VERSION': api_version,
-        'Accept': 'application/json',
+        'Accept': 'application/json; charset=UTF-8',
         'Content-Type': 'application/json',
         'X-User-Authorization': token,
         'User-Agent': 'G-RAC'
@@ -337,9 +337,9 @@ def getDeviceById(deviceid):
     url = Parameters["Address"] + "/deviceStatus/now/" + deviceid
     payload = ""
     headers = {
-        'X-APP-TYPE': '1',
+        'X-APP-TYPE': '0',
         'X-APP-VERSION': api_version,
-        'Accept': 'application/json',
+        'Accept': 'application/json; charset=UTF-8',
         'Content-Type': 'application/json',
         'X-User-Authorization': token,
         'User-Agent': 'G-RAC'
@@ -362,9 +362,9 @@ def updateDeviceId(deviceid, parameterName, parameterValue):
     payload = "{\"deviceGuid\": \"" + deviceid + "\", \"parameters\": { \"" + parameterName + "\": " + str(
         parameterValue) + " }}"
     headers = {
-        'X-APP-TYPE': '1',
+        'X-APP-TYPE': '0',
         'X-APP-VERSION': api_version,
-        'Accept': 'application/json',
+        'Accept': 'application/json; charset=UTF-8',
         'Content-Type': 'application/json',
         'X-User-Authorization': token,
         'User-Agent': 'G-RAC'
