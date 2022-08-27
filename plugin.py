@@ -72,13 +72,22 @@ class PanasonicCZTACG1Plugin:
 
         # loop found devices to create then in domoticz
         nbdevices = 0  # (nbdevices:=nbdevices+1) = ++nbdevices
-        if (len(Devices) == 0):
-            for group in panasonic_devices['groupList']:
-                groupname = group['groupName']
-                for device in group['deviceList']:
-                    devicename = device['deviceName']
-                    deviceid = device['deviceGuid']
 
+        for group in panasonic_devices['groupList']:
+            groupname = group['groupName']
+            for device in group['deviceList']:
+                devicename = device['deviceName']
+                deviceid = device['deviceGuid']
+
+                # check if device already exist in Domoticz
+                exist = False
+                for x in Devices:
+                    if (deviceid == Devices[x].DeviceID):
+                        exist = True
+
+                if exist :
+                    Domoticz.Log("Device " + devicename + " already exists in domoticz (DeviceID=" + deviceid + ").")
+                else :
                     # TODO check if device is support before creation ("airSwingLR":true,"nanoe":false,"autoMode":true,"autoSwingUD":false,"ecoNavi":false,...)
                     nbdevices = nbdevices + 1
                     Domoticz.Device(Name=devicename + "[Power]", Unit=nbdevices, Image=16,
