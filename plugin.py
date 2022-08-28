@@ -88,7 +88,7 @@ class PanasonicCZTACG1Plugin:
                 if exist :
                     Domoticz.Log("Device " + devicename + " already exists in domoticz (DeviceID=" + deviceid + ").")
                 else :
-                    Domoticz.Log("Creating device " + devicename + ", DeviceID=" + deviceid + ", Unit="+ nbdevices +".")
+                    Domoticz.Log("Creating device " + devicename + ", DeviceID=" + deviceid + ", Unit="+ str(nbdevices) +".")
                     # TODO check if device is support before creation ("airSwingLR":true,"nanoe":false,"autoMode":true,"autoSwingUD":false,"ecoNavi":false,...)
                     nbdevices = nbdevices + 1
                     Domoticz.Device(Name=devicename + "[Power]", Unit=nbdevices, Image=16,
