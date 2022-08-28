@@ -71,7 +71,7 @@ class PanasonicCZTACG1Plugin:
         panasonic_devices = getDevices()
 
         # loop found devices to create then in domoticz
-        nbdevices = 0  # (nbdevices:=nbdevices+1) = ++nbdevices
+        nbdevices = len(Devices)  # (nbdevices:=nbdevices+1) = ++nbdevices
 
         for group in panasonic_devices['groupList']:
             groupname = group['groupName']
