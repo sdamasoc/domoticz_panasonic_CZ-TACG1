@@ -79,9 +79,13 @@ class PanasonicCZTACG1Plugin:
                 devicename = device['deviceName']
                 deviceid = device['deviceGuid']
 
-                # check if device already exist in Domoticz
                 exist = False
                 for x in Devices:
+                    Domoticz.Debug("x="+str(x)+",DeviceID="+ Devices[x].DeviceID + ", Name="+Devices[x].Name + "Dump=" + str(Devices[x]));
+                    # check if there's an unitId > nbdevices
+                    if (x > nbdevices):
+                        nbdevices = x
+                    # check if device already exist in Domoticz
                     if (deviceid == Devices[x].DeviceID):
                         exist = True
 
