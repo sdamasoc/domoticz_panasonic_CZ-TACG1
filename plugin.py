@@ -3,7 +3,7 @@
 # Author: sdamasoc
 #
 """
-<plugin key="CZ-TACG1" name="Panasonic Airco (CZ-TACG1)" author="sdamasoc" version="1.1.0" externallink="https://aircon.panasonic.com/connectivity/consumer/comfort_cloud_app.html">
+<plugin key="CZ-TACG1" name="Panasonic Airco (CZ-TACG1)" author="sdamasoc" version="1.1.0" externallink="https://www.panasonic.com/global/hvac/air-conditioning/connectivity/comfort-cloud/home-owner.html">
     <description>
         <h2>Panasonic Cloud Control Plugin</h2><br/>
         This is a Domoticz python plugin to communicate through Panasonic Cloud Comfort API.
