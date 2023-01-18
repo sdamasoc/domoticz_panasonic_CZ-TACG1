@@ -5,7 +5,7 @@ from datetime import date
 
 # global var token
 token = None
-Parameters = {"Mode3": "1.15.1", "Address": "https://accsmart.panasonic.com", "Username" : "XXXXXXX", "Password":"YYYYYYY"}
+Parameters = {"Mode3": "1.17.0", "Address": "https://accsmart.panasonic.com", "Username" : "XXXXXXX", "Password":"YYYYYYY"}
 
 
 class PanasonicCZTACG1Plugin:
