@@ -207,6 +207,7 @@ class PanasonicCZTACG1Plugin:
         deviceid = None
         devicejson = None
         power = 0
+        value = "----"
         for x in Devices:
             if (deviceid != Devices[x].DeviceID):
                 deviceid = Devices[x].DeviceID
