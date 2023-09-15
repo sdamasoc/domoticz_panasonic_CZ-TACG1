@@ -42,7 +42,7 @@ import requests
 import json
 import Domoticz
 import time
-from datetime import date
+from datetime import datetime
 
 # global var token
 token = "ABCDEFG"
