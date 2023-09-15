@@ -45,9 +45,7 @@ import time
 from datetime import date
 
 # global var token
-token = None
-
-
+token = "ABCDEFG"
 
 class PanasonicCZTACG1Plugin:
     enabled = True
@@ -305,6 +303,8 @@ def onHeartbeat():
 # call the api to get a token
 def getToken():
     api_version = Parameters["Mode3"]
+    app_timestamp = f"'{datetime.now().strftime('%Y%m%d %H:%M:%S')}'"
+    
     url = Parameters["Address"] + "/auth/login"
     payload = "{\"language\": 0,\"loginId\": \"" + Parameters["Username"] + "\",\"password\": \"" + Parameters[
         "Password"] + "\"}"
@@ -313,7 +313,10 @@ def getToken():
         'X-APP-VERSION': api_version,
         'Accept': 'application/json; charset=UTF-8',
         'Content-Type': 'application/json',
-        'User-Agent': 'G-RAC'
+        'User-Agent': 'G-RAC',
+        'X-APP-NAME': 'Comfort Cloud',
+        'X-CFC-API-KEY': '0',
+        'X-APP-TIMESTAMP': app_timestamp
     }
     response = requests.request("POST", url, headers=headers, data=payload)
     Domoticz.Log("getToken=" + response.text)
@@ -324,6 +327,7 @@ def getToken():
 # call the api to get device list
 def getDevices():
     global token
+    app_timestamp = f"'{datetime.now().strftime('%Y%m%d %H:%M:%S')}'"
     api_version = Parameters["Mode3"]
     url = Parameters["Address"] + "/device/group/"
     payload = ""
@@ -333,7 +337,10 @@ def getDevices():
         'Accept': 'application/json; charset=UTF-8',
         'Content-Type': 'application/json',
         'X-User-Authorization': token,
-        'User-Agent': 'G-RAC'
+        'User-Agent': 'G-RAC',
+        'X-APP-NAME': 'Comfort Cloud',
+        'X-CFC-API-KEY': '0',
+        'X-APP-TIMESTAMP': app_timestamp
     }
     response = requests.request("GET", url, headers=headers, data=payload)
     Domoticz.Log("getDevices=" + response.text)
@@ -348,6 +355,8 @@ def getDevices():
 # call the api to get device infos
 def getDeviceById(deviceid):
     global token
+    app_timestamp = f"'{datetime.now().strftime('%Y%m%d %H:%M:%S')}'"
+    
     api_version = Parameters["Mode3"]
     url = Parameters["Address"] + "/deviceStatus/now/" + deviceid
     payload = ""
@@ -357,7 +366,10 @@ def getDeviceById(deviceid):
         'Accept': 'application/json; charset=UTF-8',
         'Content-Type': 'application/json',
         'X-User-Authorization': token,
-        'User-Agent': 'G-RAC'
+        'User-Agent': 'G-RAC',
+        'X-APP-NAME': 'Comfort Cloud',
+        'X-CFC-API-KEY': '0',
+        'X-APP-TIMESTAMP': app_timestamp
     }
     response = requests.request("GET", url, headers=headers, data=payload)
     Domoticz.Log("getDeviceById=" + response.text)
@@ -371,6 +383,8 @@ def getDeviceById(deviceid):
 # call the api to update device parameter
 def updateDeviceId(deviceid, parameterName, parameterValue):
     global token
+    app_timestamp = f"'{datetime.now().strftime('%Y%m%d %H:%M:%S')}'"
+    
     api_version = Parameters["Mode3"]
     Domoticz.Log("updating DeviceId=" + deviceid + ", " + parameterName + "=" + str(parameterValue) + "...")
     url = Parameters["Address"] + "/deviceStatus/control/"
@@ -382,7 +396,10 @@ def updateDeviceId(deviceid, parameterName, parameterValue):
         'Accept': 'application/json; charset=UTF-8',
         'Content-Type': 'application/json',
         'X-User-Authorization': token,
-        'User-Agent': 'G-RAC'
+        'User-Agent': 'G-RAC',
+        'X-APP-NAME': 'Comfort Cloud',
+        'X-CFC-API-KEY': '0',
+        'X-APP-TIMESTAMP': app_timestamp
     }
     response = requests.request("POST", url, headers=headers, data=payload)
     Domoticz.Log("updateDeviceId=" + response.text)
