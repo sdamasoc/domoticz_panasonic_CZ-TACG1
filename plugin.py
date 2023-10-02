@@ -3,7 +3,7 @@
 # Author: sdamasoc
 #
 """
-<plugin key="CZ-TACG1" name="Panasonic Airco (CZ-TACG1)" author="sdamasoc" version="2.0.0" externallink="https://www.panasonic.com/global/hvac/air-conditioning/connectivity/comfort-cloud/home-owner.html">
+<plugin key="CZ-TACG1" name="Panasonic Airco (CZ-TACG1)" author="sdamasoc" version="1.1.0" externallink="https://www.panasonic.com/global/hvac/air-conditioning/connectivity/comfort-cloud/home-owner.html">
     <description>
         <h2>Panasonic Cloud Control Plugin</h2><br/>
         This is a Domoticz python plugin to communicate through Panasonic Cloud Comfort API.
@@ -34,23 +34,18 @@
                 <option label="False" value="Normal"  default="true" />
             </options>
         </param>
-        <param field="Mode3" label="API Version" width="60px" required="true" default="1.19.0"/>
+        <param field="Mode3" label="API Version" width="60px" required="true" default="1.18.0"/>
     </params>
 </plugin>
 """
+import requests
+import json
 import Domoticz
 import time
-from pluginfunctions import dump_config_to_log, dump_http_response_to_log, get_devices, get_device_by_id, update_device_id, get_app_version
-import config
+from datetime import datetime
 
-# set config parameters
-config.update_interval = int(Parameters["Mode1"])
-config.debug_level = Parameters["Mode2"]
-config.api_version = Parameters["Mode3"]
-config.address = Parameters["Address"]
-config.username = Parameters["Username"]
-config.password = Parameters["Password"]
-config.devices = Devices
+# global var token
+token = "ABCDEFG"
 
 class PanasonicCZTACG1Plugin:
     enabled = True
@@ -62,10 +57,8 @@ class PanasonicCZTACG1Plugin:
 
     def onStart(self):
         Domoticz.Debug("onStart called")
-        # 1st try to get last version of the plugin
-        config.api_version = get_app_version()
 
-        if config.debug_level == "Debug":
+        if Parameters["Mode2"] == "Debug":
             # 0: None. All Python and framework debugging is disabled.
             # 1: All. Very verbose log from plugin framework and plugin debug messages.
             # 2: Mask value. Shows messages from Plugin Domoticz.Debug() calls only.
@@ -73,10 +66,10 @@ class PanasonicCZTACG1Plugin:
             Domoticz.Debugging(2)
 
         # get devices list
-        panasonic_devices = get_devices()
+        panasonic_devices = getDevices()
 
         # loop found devices to create then in domoticz
-        nbdevices = len(config.devices)  # (nbdevices:=nbdevices+1) = ++nbdevices
+        nbdevices = len(Devices)  # (nbdevices:=nbdevices+1) = ++nbdevices
 
         for group in panasonic_devices['groupList']:
             groupname = group['groupName']
@@ -85,13 +78,13 @@ class PanasonicCZTACG1Plugin:
                 deviceid = device['deviceGuid']
 
                 exist = False
-                for x in config.devices:
-                    Domoticz.Debug("x="+str(x)+",DeviceID="+ config.devices[x].DeviceID + ", Name="+config.devices[x].Name + "Dump=" + str(config.devices[x]));
+                for x in Devices:
+                    Domoticz.Debug("x="+str(x)+",DeviceID="+ Devices[x].DeviceID + ", Name="+Devices[x].Name + "Dump=" + str(Devices[x]));
                     # check if there's an unitId > nbdevices
                     if (x > nbdevices):
                         nbdevices = x
                     # check if device already exist in Domoticz
-                    if (deviceid == config.devices[x].DeviceID):
+                    if (deviceid == Devices[x].DeviceID):
                         exist = True
 
                 if exist :
@@ -151,7 +144,7 @@ class PanasonicCZTACG1Plugin:
                     Domoticz.Log("Device " + devicename + " created (DeviceID=" + deviceid + ").")
 
         onHeartbeat()
-        dump_config_to_log()
+        DumpConfigToLog()
 
         Domoticz.Debug("onStart end")
 
@@ -163,37 +156,37 @@ class PanasonicCZTACG1Plugin:
 
     def onMessage(self, Connection, Data):
         Domoticz.Debug("onMessage called")
-        dump_http_response_to_log(Data)
+        DumpHTTPResponseToLog(Data)
 
     def onCommand(self, Unit, Command, Level, Hue):
-        Domoticz.Log("Command received for device Name=" + config.devices[Unit].Name + "(deviceId=" + config.devices[
+        Domoticz.Log("Command received for device Name=" + Devices[Unit].Name + "(deviceId=" + Devices[
             Unit].DeviceID + ") U=" + str(Unit) + " C=" + str(Command) + " L=" + str(Level) + " H=" + str(Hue))
 
         if (Command == "On"):
-            update_device_id(config.devices[Unit].DeviceID, "operate", 1)
-            config.devices[Unit].Update(nValue=1, sValue="100")
+            updateDeviceId(Devices[Unit].DeviceID, "operate", 1)
+            Devices[Unit].Update(nValue=1, sValue="100")
             self.powerOn = 1
         elif (Command == "Off"):
-            update_device_id(config.devices[Unit].DeviceID, "operate", 0)
-            config.devices[Unit].Update(nValue=0, sValue="0")
+            updateDeviceId(Devices[Unit].DeviceID, "operate", 0)
+            Devices[Unit].Update(nValue=0, sValue="0")
             self.powerOn = 0
         elif (Command == "Set Level"):
-            if (config.devices[Unit].nValue != self.powerOn or (config.devices[Unit].sValue != Level) and Level != "--"):
-                if ("[Target temp]" in config.devices[Unit].Name):
-                    update_device_id(config.devices[Unit].DeviceID, "temperatureSet", float(Level))
-                if ("[Mode]" in config.devices[Unit].Name):
+            if (Devices[Unit].nValue != self.powerOn or (Devices[Unit].sValue != Level) and Level != "--"):
+                if ("[Target temp]" in Devices[Unit].Name):
+                    updateDeviceId(Devices[Unit].DeviceID, "temperatureSet", float(Level))
+                if ("[Mode]" in Devices[Unit].Name):
                     operationmode = (Level / 10) - 1
-                    update_device_id(config.devices[Unit].DeviceID, "operationMode", int(operationmode))
-                elif ("[Fan Speed]" in config.devices[Unit].Name):
+                    updateDeviceId(Devices[Unit].DeviceID, "operationMode", int(operationmode))
+                elif ("[Fan Speed]" in Devices[Unit].Name):
                     fanspeed = (Level / 10) - 1
-                    update_device_id(config.devices[Unit].DeviceID, "fanSpeed", int(fanspeed))
-                elif ("[Eco Mode]" in config.devices[Unit].Name):
+                    updateDeviceId(Devices[Unit].DeviceID, "fanSpeed", int(fanspeed))
+                elif ("[Eco Mode]" in Devices[Unit].Name):
                     ecomode = (Level / 10) - 1
-                    update_device_id(config.devices[Unit].DeviceID, "ecoMode", int(ecomode))
-                elif ("[Air Swing]" in config.devices[Unit].Name):
+                    updateDeviceId(Devices[Unit].DeviceID, "ecoMode", int(ecomode))
+                elif ("[Air Swing]" in Devices[Unit].Name):
                     airswing = (Level / 10) - 1
-                    update_device_id(config.devices[Unit].DeviceID, "airSwingUD", int(airswing))
-                config.devices[Unit].Update(nValue=self.powerOn, sValue=str(Level))
+                    updateDeviceId(Devices[Unit].DeviceID, "airSwingUD", int(airswing))
+                Devices[Unit].Update(nValue=self.powerOn, sValue=str(Level))
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
         Domoticz.Log("Notification: " + Name + "," + Subject + "," + Text + "," + Status + "," + str(
@@ -204,7 +197,7 @@ class PanasonicCZTACG1Plugin:
 
     def onHeartbeat(self):
         Domoticz.Debug("onHeartbeat started...")
-        update_interval = config.update_interval
+        update_interval = int(Parameters["Mode1"])
         Domoticz.Debug("interval since last update = " + str(time.time() - self.last_update) + ", update_interval = " + str(update_interval))
         if time.time() - self.last_update < update_interval:
             Domoticz.Debug("update interval not reached")
@@ -213,48 +206,48 @@ class PanasonicCZTACG1Plugin:
         devicejson = None
         power = 0
         value = "----"
-        for x in config.devices:
-            if (deviceid != config.devices[x].DeviceID):
-                deviceid = config.devices[x].DeviceID
-                devicejson = get_device_by_id(deviceid)
+        for x in Devices:
+            if (deviceid != Devices[x].DeviceID):
+                deviceid = Devices[x].DeviceID
+                devicejson = getDeviceById(deviceid)
             if (devicejson.get('parameters') is None):
                 # the device is offline
                 Domoticz.Log("The device " + deviceid + " return an error (code=" + str(devicejson.get('code')) + ", message=" + str(devicejson.get('message')) + ")")
                 continue
-            if ("[Target temp]" in config.devices[x].Name):
+            if ("[Target temp]" in Devices[x].Name):
                 value = str(float(devicejson['parameters']['temperatureSet']))
-            elif ("[Room Temp]" in config.devices[x].Name):
+            elif ("[Room Temp]" in Devices[x].Name):
                 value = str(float(devicejson['parameters']['insideTemperature']))
-            elif ("[Outdoor Temp]" in config.devices[x].Name):
+            elif ("[Outdoor Temp]" in Devices[x].Name):
                 if (float(devicejson['parameters']['outTemperature']) > 100):
                     value = "--"
                 else:
                     value = str(float(devicejson['parameters']['outTemperature']))
-            elif ("[Power]" in config.devices[x].Name):
+            elif ("[Power]" in Devices[x].Name):
                 power = int(devicejson['parameters']['operate'])
                 value = str(power * 100)
-            elif ("[Mode]" in config.devices[x].Name):
+            elif ("[Mode]" in Devices[x].Name):
                 operationmode = int(devicejson['parameters']['operationMode'])
                 value = str((operationmode + 1) * 10)
-            elif ("[Fan Speed]" in config.devices[x].Name):
+            elif ("[Fan Speed]" in Devices[x].Name):
                 fanspeed = int(devicejson['parameters']['fanSpeed'])
                 value = str((fanspeed + 1) * 10)
-            elif ("[Eco Mode]" in config.devices[x].Name):
+            elif ("[Eco Mode]" in Devices[x].Name):
                 ecomode = int(devicejson['parameters']['ecoMode'])
                 value = str((ecomode + 1) * 10)
-            elif ("[Air Swing]" in config.devices[x].Name):
+            elif ("[Air Swing]" in Devices[x].Name):
                 airswing = int(devicejson['parameters']['airSwingUD'])
                 value = str((airswing + 1) * 10)
 
             # update value only if value has changed
-            if (config.devices[x].sValue != value):
-                config.devices[x].Update(nValue=power, sValue=value)
+            if (Devices[x].sValue != value):
+                Devices[x].Update(nValue=power, sValue=value)
 
-        # Domoticz.Debug("Device ID:       '" + str(config.devices[x].ID) + "'")
-        # Domoticz.Debug("Device Name:     '" + config.devices[x].Name + "'")
-        # Domoticz.Debug("Device nValue:    " + str(config.devices[x].nValue))
-        # Domoticz.Debug("Device sValue:   '" + config.devices[x].sValue + "'")
-        # Domoticz.Debug("Device LastLevel: " + str(config.devices[x].LastLevel))
+        # Domoticz.Debug("Device ID:       '" + str(Devices[x].ID) + "'")
+        # Domoticz.Debug("Device Name:     '" + Devices[x].Name + "'")
+        # Domoticz.Debug("Device nValue:    " + str(Devices[x].nValue))
+        # Domoticz.Debug("Device sValue:   '" + Devices[x].sValue + "'")
+        # Domoticz.Debug("Device LastLevel: " + str(Devices[x].LastLevel))
         self.last_update = time.time()
         Domoticz.Debug("onHeartbeat ended.")
 
@@ -302,17 +295,156 @@ def onHeartbeat():
     global _plugin
     _plugin.onHeartbeat()
 
+
+############################
+# Generic helper functions #
+############################
+
+# call the api to get a token
+def getToken():
+    api_version = Parameters["Mode3"]
+    app_timestamp = f"'{datetime.now().strftime('%Y%m%d %H:%M:%S')}'"
+    
+    url = Parameters["Address"] + "/auth/login"
+    payload = "{\"language\": 0,\"loginId\": \"" + Parameters["Username"] + "\",\"password\": \"" + Parameters[
+        "Password"] + "\"}"
+    headers = {
+        'X-APP-TYPE': '0',
+        'X-APP-VERSION': api_version,
+        'Accept': 'application/json; charset=UTF-8',
+        'Content-Type': 'application/json',
+        'User-Agent': 'G-RAC',
+        'X-APP-NAME': 'Comfort Cloud',
+        'X-CFC-API-KEY': '0',
+        'X-APP-TIMESTAMP': app_timestamp
+    }
+    response = requests.request("POST", url, headers=headers, data=payload)
+    Domoticz.Log("getToken=" + response.text)
+    res = json.loads(response.text)
+    return res["uToken"]
+
+
+# call the api to get device list
+def getDevices():
+    global token
+    app_timestamp = f"'{datetime.now().strftime('%Y%m%d %H:%M:%S')}'"
+    api_version = Parameters["Mode3"]
+    url = Parameters["Address"] + "/device/group/"
+    payload = ""
+    headers = {
+        'X-APP-TYPE': '0',
+        'X-APP-VERSION': api_version,
+        'Accept': 'application/json; charset=UTF-8',
+        'Content-Type': 'application/json',
+        'X-User-Authorization': token,
+        'User-Agent': 'G-RAC',
+        'X-APP-NAME': 'Comfort Cloud',
+        'X-CFC-API-KEY': '0',
+        'X-APP-TIMESTAMP': app_timestamp
+    }
+    response = requests.request("GET", url, headers=headers, data=payload)
+    Domoticz.Log("getDevices=" + response.text)
+    if ("Token expires" in response.text):
+        token = getToken()
+        return getDevices()
+    else:
+        return json.loads(response.text)
+    return json.loads(response.text)
+
+
+# call the api to get device infos
+def getDeviceById(deviceid):
+    global token
+    app_timestamp = f"'{datetime.now().strftime('%Y%m%d %H:%M:%S')}'"
+    
+    api_version = Parameters["Mode3"]
+    url = Parameters["Address"] + "/deviceStatus/now/" + deviceid
+    payload = ""
+    headers = {
+        'X-APP-TYPE': '0',
+        'X-APP-VERSION': api_version,
+        'Accept': 'application/json; charset=UTF-8',
+        'Content-Type': 'application/json',
+        'X-User-Authorization': token,
+        'User-Agent': 'G-RAC',
+        'X-APP-NAME': 'Comfort Cloud',
+        'X-CFC-API-KEY': '0',
+        'X-APP-TIMESTAMP': app_timestamp
+    }
+    response = requests.request("GET", url, headers=headers, data=payload)
+    Domoticz.Log("getDeviceById=" + response.text)
+    if ("Token expires" in response.text):
+        token = getToken()
+        return getDeviceById(deviceid)
+    else:
+        return json.loads(response.text)
+
+
+# call the api to update device parameter
+def updateDeviceId(deviceid, parameterName, parameterValue):
+    global token
+    app_timestamp = f"'{datetime.now().strftime('%Y%m%d %H:%M:%S')}'"
+    
+    api_version = Parameters["Mode3"]
+    Domoticz.Log("updating DeviceId=" + deviceid + ", " + parameterName + "=" + str(parameterValue) + "...")
+    url = Parameters["Address"] + "/deviceStatus/control/"
+    payload = "{\"deviceGuid\": \"" + deviceid + "\", \"parameters\": { \"" + parameterName + "\": " + str(
+        parameterValue) + " }}"
+    headers = {
+        'X-APP-TYPE': '0',
+        'X-APP-VERSION': api_version,
+        'Accept': 'application/json; charset=UTF-8',
+        'Content-Type': 'application/json',
+        'X-User-Authorization': token,
+        'User-Agent': 'G-RAC',
+        'X-APP-NAME': 'Comfort Cloud',
+        'X-CFC-API-KEY': '0',
+        'X-APP-TIMESTAMP': app_timestamp
+    }
+    response = requests.request("POST", url, headers=headers, data=payload)
+    Domoticz.Log("updateDeviceId=" + response.text)
+    if ("Token expires" in response.text):
+        token = getToken()
+        return updateDeviceId(deviceid, parameterName, parameterValue)
+    else:
+        return json.loads(response.text)
+
+
+# dumps the http response to the log
+def DumpHTTPResponseToLog(httpResp, level=0):
+    if (level == 0): Domoticz.Debug("HTTP Details (" + str(len(httpResp)) + "):")
+    indentStr = ""
+    for x in range(level):
+        indentStr += "----"
+    if isinstance(httpResp, dict):
+        for x in httpResp:
+            if not isinstance(httpResp[x], dict) and not isinstance(httpResp[x], list):
+                Domoticz.Debug(indentStr + ">'" + x + "':'" + str(httpResp[x]) + "'")
+            else:
+                Domoticz.Debug(indentStr + ">'" + x + "':")
+                DumpHTTPResponseToLog(httpResp[x], level + 1)
+    elif isinstance(httpResp, list):
+        for x in httpResp:
+            Domoticz.Debug(indentStr + "['" + x + "']")
+    else:
+        Domoticz.Debug(indentStr + ">'" + x + "':'" + str(httpResp[x]) + "'")
+
+
 # Dumps the config to debug log
-def dump_config_to_log():
+def DumpConfigToLog():
     for x in Parameters:
         if Parameters[x] != "":
             Domoticz.Debug("'" + x + "':'" + str(Parameters[x]) + "'")
-    Domoticz.Debug("Device count: " + str(len(config.devices)))
-    for x in config.devices:
-        Domoticz.Debug("Device:           " + str(x) + " - " + str(config.devices[x]))
-        Domoticz.Debug("Device ID:       '" + str(config.devices[x].ID) + "'")
-        Domoticz.Debug("Device Name:     '" + config.devices[x].Name + "'")
-        Domoticz.Debug("Device nValue:    " + str(config.devices[x].nValue))
-        Domoticz.Debug("Device sValue:   '" + config.devices[x].sValue + "'")
-        Domoticz.Debug("Device LastLevel: " + str(config.devices[x].LastLevel))
+    Domoticz.Debug("Device count: " + str(len(Devices)))
+    for x in Devices:
+        Domoticz.Debug("Device:           " + str(x) + " - " + str(Devices[x]))
+        Domoticz.Debug("Device ID:       '" + str(Devices[x].ID) + "'")
+        Domoticz.Debug("Device Name:     '" + Devices[x].Name + "'")
+        Domoticz.Debug("Device nValue:    " + str(Devices[x].nValue))
+        Domoticz.Debug("Device sValue:   '" + Devices[x].sValue + "'")
+        Domoticz.Debug("Device LastLevel: " + str(Devices[x].LastLevel))
     return
+
+########################
+# End helper functions #
+########################
