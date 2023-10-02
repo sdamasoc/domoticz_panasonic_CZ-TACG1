@@ -21,7 +21,8 @@ def get_app_version():
 
     try:
         Domoticz.Log("Getting latest Comfort Cloud version from the App Store...")
-        response = requests.request("GET", config.appstore_url)
+        url = 'https://apps.apple.com/app/panasonic-comfort-cloud/id1348640525'
+        response = requests.request("GET", url)
         response.raise_for_status()  # Vérifiez si la requête a réussi; sinon, une exception est levée
 
         html_string = response.text

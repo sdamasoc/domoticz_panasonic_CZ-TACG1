@@ -40,7 +40,7 @@
 """
 import Domoticz
 import time
-from pluginfunctions import dump_http_response_to_log, get_devices, get_device_by_id, update_device_id, get_app_version
+from pluginfunctions import dump_config_to_log, dump_http_response_to_log, get_devices, get_device_by_id, update_device_id, get_app_version
 import config
 
 # set config parameters
@@ -220,11 +220,6 @@ class PanasonicCZTACG1Plugin:
             if (devicejson.get('parameters') is None):
                 # the device is offline
                 Domoticz.Log("The device " + deviceid + " return an error (code=" + str(devicejson.get('code')) + ", message=" + str(devicejson.get('message')) + ")")
-                continue
-            # device type 2 seems to be a waterpump => different api
-            if (devicejson.get('deviceType') == "2"):
-                Domoticz.Log("!!! The device " + deviceid + " is not yet supported !!!")
-                Domoticz.Log("dump json for " + deviceid + ": " + devicejson)
                 continue
             if ("[Target temp]" in config.devices[x].Name):
                 value = str(float(devicejson['parameters']['temperatureSet']))
