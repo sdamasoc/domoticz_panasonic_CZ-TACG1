@@ -1,6 +1,7 @@
 update_interval = None
 debug_level = None
 api_version = None
+token = None
 address = None
 username = None
 password = None

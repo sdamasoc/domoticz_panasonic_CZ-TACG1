@@ -1,5 +1,5 @@
 from datetime import datetime
-from pluginfunctions import get_devices, get_app_version
+from pluginfunctions import get_devices, get_app_version, get_token
 import config
 
 # set test config parameters
@@ -26,6 +26,7 @@ class PanasonicCZTACG1Plugin:
         print("onStart called")
         # 1st try to get last version of the plugin
         config.api_version = get_app_version()
+        config.token = get_token()
 
         # get devices list
         panasonic_devices = get_devices()

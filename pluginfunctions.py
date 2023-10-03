@@ -7,9 +7,6 @@ import config
 ############################
 # Generic helper functions #
 ############################
-# global var token
-token = "ABCDEFG"
-api_version = config.api_version
 
 # get current timestamp
 def get_timestamp():
@@ -17,8 +14,7 @@ def get_timestamp():
 
 # call app store to get latest version
 def get_app_version():
-    global api_version
-
+    version = config.api_version
     try:
         Domoticz.Log("Getting latest Comfort Cloud version from the App Store...")
         response = requests.request("GET", config.appstore_url)
@@ -33,8 +29,8 @@ def get_app_version():
             start_pos += len(start_str)
             end_pos = html_string.find(end_str, start_pos)
             if end_pos != -1:
-                api_version = html_string[start_pos:end_pos]
-                Domoticz.Log("get_app_version=" + api_version)
+                version = html_string[start_pos:end_pos]
+                Domoticz.Log("get_app_version=" + version)
 
     except requests.RequestException as e:
         Domoticz.Error(f"Failed to get the latest Comfort Cloud version: {e}")
@@ -42,14 +38,12 @@ def get_app_version():
     except Exception as e:
         Domoticz.Error(f"An unexpected error occurred: {e}")
 
-    return api_version
+    return version
 
 
 
 # call the api to get a token
 def get_token():
-    global api_version
-    
     url = config.address + "/auth/login"
 
     payload = json.dumps({
@@ -59,7 +53,7 @@ def get_token():
     })
     headers = {
         'X-APP-TYPE': '0',
-        'X-APP-VERSION': api_version,
+        'X-APP-VERSION': config.api_version,
         'Accept': 'application/json; charset=UTF-8',
         'Content-Type': 'application/json',
         'User-Agent': 'G-RAC',
@@ -75,9 +69,6 @@ def get_token():
 
 # call the api to get device list
 def get_devices():
-    global token
-    global api_version
-
     url = config.address + "/device/group/"
 
     headers = get_headers()
@@ -87,9 +78,6 @@ def get_devices():
 
 # call the api to get device infos
 def get_device_by_id(device_id):
-    global token
-    global api_version
-    
     url = config.address + "/deviceStatus/now/" + device_id
 
     headers = get_headers()
@@ -99,9 +87,6 @@ def get_device_by_id(device_id):
 
 # call the api to update device parameter
 def update_device_id(device_id, parameter_name, parameter_value):
-    global token
-    global api_version
-    
     Domoticz.Log("updating DeviceId=" + device_id + ", " + parameter_name + "=" + str(parameter_value) + "...")
 
     url = config.address + "/deviceStatus/control/"
@@ -116,15 +101,12 @@ def update_device_id(device_id, parameter_name, parameter_value):
     return handle_response(response, lambda: update_device_id(device_id, parameter_name, parameter_value))
 
 def get_headers():
-    global token
-    global api_version
-
     return {
         'X-APP-TYPE': '0',
-        'X-APP-VERSION': api_version,
+        'X-APP-VERSION': config.api_version,
         'Accept': 'application/json; charset=UTF-8',
         'Content-Type': 'application/json',
-        'X-User-Authorization': token,
+        'X-User-Authorization': config.token,
         'User-Agent': 'G-RAC',
         'X-APP-NAME': 'Comfort Cloud',
         'X-CFC-API-KEY': '0',
@@ -148,9 +130,6 @@ def handle_response(response, retry_func):
 
     error_handlers = {
         "Token expires": handle_token_expiration,
-        "Unauthorized": handle_token_expiration,
-        "ERROR": handle_token_expiration,
-        "Forbidden": handle_api_version_update,
         "New version app has been published": handle_api_version_update,
     }
 
@@ -162,12 +141,10 @@ def handle_response(response, retry_func):
     return json.loads(response.text)
 
 def handle_token_expiration():
-    global token
-    token = get_token()
+    config.token = get_token()
 
 def handle_api_version_update():
-    global api_version
-    api_version = get_app_version()
+    config.api_version = get_app_version()
 
 # dumps the http response to the log
 def dump_http_response_to_log(httpResp, level=0):

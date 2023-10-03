@@ -44,15 +44,6 @@ from pluginfunctions import dump_http_response_to_log, get_devices, get_device_b
 # from testPlugin import Parameters, Devices
 import config
 
-# set config parameters
-config.update_interval = int(Parameters["Mode1"])
-config.debug_level = Parameters["Mode2"]
-config.api_version = Parameters["Mode3"]
-config.address = Parameters["Address"]
-config.username = Parameters["Username"]
-config.password = Parameters["Password"]
-config.devices = Devices
-
 class PanasonicCZTACG1Plugin:
     enabled = True
     powerOn = 0
@@ -62,6 +53,15 @@ class PanasonicCZTACG1Plugin:
         return
 
     def onStart(self):
+        # set config parameters
+        config.update_interval = int(Parameters["Mode1"])
+        config.debug_level = Parameters["Mode2"]
+        config.api_version = Parameters["Mode3"]
+        config.address = Parameters["Address"]
+        config.username = Parameters["Username"]
+        config.password = Parameters["Password"]
+        config.devices = Devices
+
         Domoticz.Debug("onStart called")
         # 1st try to get last version of the plugin
         config.api_version = get_app_version()
