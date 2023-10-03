@@ -7,8 +7,8 @@ config.update_interval = 60
 config.debug_level = "Debug"
 config.api_version = "1.17.0"
 config.address = "https://accsmart.panasonic.com"
-config.username = "<YOUR_PANASONIC_USER"
-config.password = "<YOUR_PANASONIC_PWD"
+config.username = "<YOUR_PANASONIC_USER>"
+config.password = "<YOUR_PANASONIC_PWD>"
 config.devices = {}
 
 
