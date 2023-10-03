@@ -12,6 +12,8 @@ config.password = "<YOUR_PANASONIC_PWD"
 config.devices = {}
 
 
+Parameters = []
+Devices = [] 
 ########################
 
 

@@ -40,7 +40,8 @@
 """
 import Domoticz
 import time
-from pluginfunctions import dump_http_response_to_log, get_devices, get_device_by_id, update_device_id, get_app_version
+from pluginfunctions import dump_http_response_to_log, get_devices, get_device_by_id, update_device_id, get_app_version, get_token
+# from testPlugin import Parameters, Devices
 import config
 
 # set config parameters
@@ -64,6 +65,7 @@ class PanasonicCZTACG1Plugin:
         Domoticz.Debug("onStart called")
         # 1st try to get last version of the plugin
         config.api_version = get_app_version()
+        config.token = get_token();
 
         if config.debug_level == "Debug":
             # 0: None. All Python and framework debugging is disabled.
