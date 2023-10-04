@@ -41,8 +41,9 @@
 import Domoticz
 import time
 from pluginfunctions import dump_http_response_to_log, get_devices, get_device_by_id, update_device_id, get_app_version, get_token
-# from testPlugin import Parameters, Devices
 import config
+# to test locally uncomment this line, rename .Domoticz.py to Domoticz.py and set your cvredentials in testPlugin.py
+# from Domoticz import Parameters, Devices
 
 class PanasonicCZTACG1Plugin:
     enabled = True

@@ -1,19 +1,19 @@
 from datetime import datetime
-from pluginfunctions import get_devices, get_app_version, get_token
+from pluginfunctions import get_devices, get_device_by_id, get_app_version, get_token
 import config
 
-# set test config parameters
+# change this values with your credentials
+config.username = "<YOUR_PANASONIC_USER>"
+config.password = "<YOUR_PANASONIC_PWD>"
+
+# test config parameters
 config.update_interval = 60
 config.debug_level = "Debug"
 config.api_version = "1.17.0"
 config.address = "https://accsmart.panasonic.com"
-config.username = "<YOUR_PANASONIC_USER>"
-config.password = "<YOUR_PANASONIC_PWD>"
 config.devices = {}
 
 
-Parameters = []
-Devices = [] 
 ########################
 
 
@@ -38,6 +38,7 @@ class PanasonicCZTACG1Plugin:
             for device in group['deviceList']:
                 devicename = device['deviceName']
                 deviceid = device['deviceGuid']
+                get_device_by_id(deviceid)
                 print("Device " + devicename + " found (DeviceID=" + deviceid + ").")
 
         print("onStart end")

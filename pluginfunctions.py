@@ -1,3 +1,4 @@
+import os
 import requests
 import json
 import Domoticz
@@ -15,6 +16,13 @@ def get_timestamp():
 # call app store to get latest version
 def get_app_version():
     version = config.api_version
+    # if api_version_file_path already exist reuse it
+    if os.path.exists(config.api_version_file_path):
+        with open(config.api_version_file_path, 'r') as version_file:
+            version = version_file.read().strip()
+            Domoticz.Log("Reusing existing api_version=" + version)
+            return version
+    # else    
     try:
         Domoticz.Log("Getting latest Comfort Cloud version from the App Store...")
         response = requests.request("GET", config.appstore_url)
@@ -32,6 +40,10 @@ def get_app_version():
                 version = html_string[start_pos:end_pos]
                 Domoticz.Log("get_app_version=" + version)
 
+        # save the token
+        with open(config.api_version_file_path, 'w') as version_file:
+            version_file.write(version)
+
     except requests.RequestException as e:
         Domoticz.Error(f"Failed to get the latest Comfort Cloud version: {e}")
 
@@ -44,6 +56,13 @@ def get_app_version():
 
 # call the api to get a token
 def get_token():
+    # if token already exist reuse it
+    if os.path.exists(config.token_file_path):
+        with open(config.token_file_path, 'r') as token_file:
+            token = token_file.read().strip()
+            Domoticz.Log("Reusing existing token=" + token)
+            return token
+    # else    
     url = config.address + "/auth/login"
 
     payload = json.dumps({
@@ -64,7 +83,11 @@ def get_token():
     response = send_request("POST", url, headers=headers, data=payload)
     Domoticz.Log("get_token=" + response.text)
     res = json.loads(response.text)
-    return res["uToken"]
+    token = res["uToken"] 
+    # save the token
+    with open(config.token_file_path, 'w') as token_file:
+        token_file.write(token)
+    return token
 
 
 # call the api to get device list
@@ -74,7 +97,7 @@ def get_devices():
     headers = get_headers()
     response = send_request("GET", url, headers=headers)
     #Domoticz.Log("get_devices=" + response.text)
-    return handle_response(response, get_devices)
+    return handle_response(response, lambda: get_devices())
 
 # call the api to get device infos
 def get_device_by_id(device_id):
@@ -123,8 +146,6 @@ def send_request(method, url, headers=None, data=None):
         return response
 
 def handle_response(response, retry_func):
-    Domoticz.Debug(f'{retry_func.__name__} = {response.text}')
-
     if response is None:
         return None
 
@@ -141,9 +162,17 @@ def handle_response(response, retry_func):
     return json.loads(response.text)
 
 def handle_token_expiration():
+    Domoticz.Log("Token is expired, get a new token")
+    # if token file exists delete it
+    if os.path.exists(config.token_file_path):
+        os.remove(config.token_file_path)
     config.token = get_token()
 
 def handle_api_version_update():
+    Domoticz.Log("New version app has been published")
+    # if api_version_file_path file exists delete it
+    if os.path.exists(config.api_version_file_path):
+        os.remove(config.api_version_file_path)
     config.api_version = get_app_version()
 
 # dumps the http response to the log
