@@ -96,7 +96,7 @@ def get_devices():
 
     headers = get_headers()
     response = send_request("GET", url, headers=headers)
-    #Domoticz.Log("get_devices=" + response.text)
+    Domoticz.Log("get_devices=" + response.text)
     return handle_response(response, lambda: get_devices())
 
 # call the api to get device infos

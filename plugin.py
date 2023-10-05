@@ -42,7 +42,7 @@ import Domoticz
 import time
 from pluginfunctions import dump_http_response_to_log, get_devices, get_device_by_id, update_device_id, get_app_version, get_token
 import config
-# to test locally uncomment this line, rename .Domoticz.py to Domoticz.py and set your cvredentials in testPlugin.py
+# to test locally uncomment this line, rename .Domoticz.py to Domoticz.py and set your cvredentials in Domoticz.py
 # from Domoticz import Parameters, Devices
 
 class PanasonicCZTACG1Plugin:
@@ -86,6 +86,7 @@ class PanasonicCZTACG1Plugin:
             for device in group['deviceList']:
                 devicename = device['deviceName']
                 deviceid = device['deviceGuid']
+                deviceType = device['deviceType']
 
                 exist = False
                 for x in config.devices:
@@ -99,6 +100,8 @@ class PanasonicCZTACG1Plugin:
 
                 if exist :
                     Domoticz.Log("Device " + devicename + " already exists in domoticz (DeviceID=" + deviceid + ").")
+                elif(deviceType != "1"):
+                    print("DEVICE TYPE " + deviceType + "IS NOT SUPPORTED YET") 
                 else :
                     Domoticz.Log("Creating device " + devicename + ", DeviceID=" + deviceid + ", Unit="+ str(nbdevices) +".")
                     # TODO check if device is support before creation ("airSwingLR":true,"nanoe":false,"autoMode":true,"autoSwingUD":false,"ecoNavi":false,...)

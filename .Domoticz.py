@@ -1,6 +1,18 @@
+import plugin
+
 # Mock Domoticz.py
-Parameters = []
-Devices = [] 
+
+# change this values with your credentials
+Parameters = {
+        "Mode1": 60,
+        "Mode2": "Debug",
+        "Mode3": "1.17.0",
+        "Address": "https://accsmart.panasonic.com",
+        "Username": "<USERNAME>",
+        "Password": "<PASSWORD>"
+    }
+
+Devices = {}
 
 class Device:
     def __init__(self, **kwargs):
@@ -24,3 +36,6 @@ def Debug(message):
 @staticmethod
 def Error(message):
     print(f"Error: {message}")
+
+def Debugging(level):
+    return
