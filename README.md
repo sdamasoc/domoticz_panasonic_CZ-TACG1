@@ -73,13 +73,7 @@ This script was tested with:
 * Ubuntu: 20.04.2 LTS 
 
 # To test this plugin outside Domoticz
-1. In plugin.py uncomment line 
-```
-from Domoticz import Parameters, Devices
-```
+1. In plugin.py uncomment line: `from Domoticz import Parameters, Devices`
 2. Rename .Domoticz.py to Domoticz.py
 3. Put your credentials in Domoticz.py
-4. Run testPlugin.py
-```
-python testPlugin.py
-```
+4. Run testPlugin.py: `python testPlugin.py`
