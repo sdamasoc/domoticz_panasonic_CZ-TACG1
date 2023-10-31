@@ -66,8 +66,16 @@ https://www.domoticz.com/wiki/Using_Python_plugins
 
 (instructions copied from codyc1515: https://github.com/codyc1515/homebridge-panasonic-air-conditioner/)
 
+Aquarea support inspired by: https://github.com/Hernas/homebridge-panasonic-heat-pump 
+
 # Compatibility
 This script was tested with:
-* Domoticz Version: 2021.1
-* Python Version: 3.8.10
-* Ubuntu: 20.04.2 LTS 
+* Domoticz Version: 2023.2
+* Python Version: 3.10.12
+* Ubuntu: 22.04.3 LTS 
+
+# To test this plugin outside Domoticz
+1. In plugin.py uncomment line: `from Domoticz import Parameters, Devices`
+2. Rename .Domoticz.py to Domoticz.py
+3. Put your credentials in Domoticz.py
+4. Run testPlugin.py: `python testPlugin.py`
