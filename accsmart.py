@@ -55,6 +55,22 @@ def get_device_by_id(device_id):
     Domoticz.Log("get_device_by_id=" + response.text)
     return handle_response(response, lambda: get_device_by_id(device_id))
 
+# call the api to get device historic data
+def get_historic_data(device_id):
+    url = config.accsmart_url + "/deviceHistoryData"
+    payload = json.dumps({
+        "dataMode": 0,
+        "date": "20231101",
+        "deviceGuid": device_id,
+        "osTimezone": "+01:00"
+    })
+    headers = get_headers()
+    response = send_request("POST", url, headers=headers, data=payload)
+    #Domoticz.Log("get_historic_data=" + response.text)
+    res = handle_response(response, lambda: get_historic_data(device_id))
+    kWh = res["energyConsumption"]
+    return kWh
+
 # call the api to update device parameter
 def update_device_id(device_id, parameter_name, parameter_value):
     Domoticz.Log("updating DeviceId=" + device_id + ", " + parameter_name + "=" + str(parameter_value) + "...")
@@ -184,6 +200,10 @@ def add_device(devicename, deviceid, nbdevices):
     Domoticz.Device(Name=devicename + "[Air Swing]", Unit=nbdevices,
                     TypeName="Selector Switch", Image=7, Options=Options, Used=1,
                     DeviceID=deviceid).Create()
+    
+    # energyConsumption
+    nbdevices = nbdevices + 1
+    Domoticz.Device(Name=devicename + "[kWh]", Unit=16, TypeName="kWh", Used=1, DeviceID=deviceid).Create()
 
     # TODO add other switches?
 
@@ -218,6 +238,9 @@ def handle_accsmart(device, devicejson):
     elif ("[Air Swing]" in device.Name):
         airswing = int(devicejson['parameters']['airSwingUD'])
         value = str((airswing + 1) * 10)
+    elif ("[kWh]" in device.Name):
+        kWh = get_historic_data(device.DeviceID)
+        value = f'{str(float(kWh))};{str(float(kWh))}'
 
     # update value only if value has changed
     if (device.sValue != value):
