@@ -203,7 +203,7 @@ def add_device(devicename, deviceid, nbdevices):
     
     # energyConsumption
     nbdevices = nbdevices + 1
-    Domoticz.Device(Name=devicename + "[kWh]", Unit=16, TypeName="kWh", Used=1, DeviceID=deviceid).Create()
+    Domoticz.Device(Name=devicename + "[kWh]", Unit=nbdevices, TypeName="kWh", Used=1, DeviceID=deviceid).Create()
 
     # TODO add other switches?
 
