@@ -60,7 +60,7 @@ def get_historic_data(device_id):
     url = config.accsmart_url + "/deviceHistoryData"
     payload = json.dumps({
         "dataMode": 0,
-        "date": "20231101",
+        "date": common.get_date(),
         "deviceGuid": device_id,
         "osTimezone": "+01:00"
     })

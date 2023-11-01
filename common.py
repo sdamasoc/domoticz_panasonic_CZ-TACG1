@@ -11,6 +11,10 @@ import config
 def get_timestamp():
     return f"'{datetime.now().strftime('%Y%m%d %H:%M:%S')}'"
 
+# get current timestamp
+def get_date():
+    return f"{datetime.now().strftime('%Y%m%d')}"
+
 # call app store to get latest version
 def get_app_version():
     version = config.api_version

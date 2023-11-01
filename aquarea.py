@@ -11,6 +11,7 @@ import Domoticz
 from datetime import datetime
 import config
 import common
+import time
 
 power_pump = 0
 power_tank = 0
@@ -78,12 +79,27 @@ def load_device(retried=None):
 
 # load device details
 def load_device_details(device_id):
-    response = requests.get(
-        url=f'{config.aquarea_url}/remote/v1/api/devices/{device_id}?var.deviceDirect=1',
-        headers=get_headers(config.aquarea_token)
-    )
+    url=f'{config.aquarea_url}/remote/v1/api/devices/{device_id}?var.deviceDirect=1'
+    headers=get_headers(config.aquarea_token)
+    response = requests.get(url=url, headers=headers)
     Domoticz.Log(f"load_device_details={response.text}")
     return handle_response(response, lambda: load_device_details(device_id))
+
+# load device details
+def get_historic_data(device_id):
+    url=f"{config.aquarea_url}/remote/v1/api/consumption/{device_id}?date={datetime.now().strftime('%Y-%m-%d')}&_={int(time.time())}"
+    headers=get_headers(config.aquarea_token, device_id, device_id[6:17])
+    response = requests.get(url=url, headers=headers)
+    #Domoticz.Log(f"get_historic_data={response.text}")
+    res=handle_response(response, lambda: get_historic_data(device_id))
+    total_sum = 0
+    for date_data in res['dateData']:
+        for data_set in date_data['dataSets']:
+            if data_set['name'] == 'energyShowing':
+                for data in data_set['data']:
+                    if data['name'] != 'Consume' and data['values']:
+                        total_sum += sum(value for value in data['values'] if value is not None)
+    return total_sum
 
 # call the api to update device parameter
 def update_device_id(device_id, target, parameter_name, parameter_value):
@@ -116,7 +132,7 @@ def update_device_id(device_id, target, parameter_name, parameter_value):
     # return handle_response(response, lambda: update_device_id(device_id, parameter_name, parameter_value))
     return
 
-def get_headers(aquarea_token=None, device_id=None):
+def get_headers(aquarea_token=None, device_id=None, device_gwid=None):
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'Origin': config.aquarea_url,
@@ -135,6 +151,8 @@ def get_headers(aquarea_token=None, device_id=None):
         headers['Referer']=f'{config.aquarea_url}/remote/a2wStatusDisplay'
         if device_id:
             headers['Cookie']=f'accessToken={config.aquarea_token}; selectedDeviceId={device_id};'
+        if device_gwid:
+            headers['Cookie']=f'selectedGwid=B302046413; selectedDeviceId={device_id}; deviceControlDate={int(time.time())}; accessToken={config.aquarea_token}; selectedDeviceId={device_id}; operationDeviceTop=2'
     return headers
 
 def send_request(method, url, headers=None, data=None):
@@ -218,6 +236,10 @@ def add_device(devicename, nbdevices):
 
             nbdevices = nbdevices + 1
             Domoticz.Device(Name=devicename + "[Tank Temp Now]", Unit=nbdevices, TypeName="Temperature", Used=1, DeviceID=selectedDeviceId).Create()
+    
+            # energyConsumption
+            nbdevices = nbdevices + 1
+            Domoticz.Device(Name=devicename + "[kWh]", Unit=nbdevices, TypeName="kWh", Used=1, DeviceID=selectedDeviceId).Create()
     else:
         Domoticz.Log(f"Device {devicename} is not responding")
 
@@ -245,6 +267,9 @@ def handle_aquarea(device, devicejson):
         value = str(float(devicejson['status'][0]['tankStatus'][0]['heatSet']))
     elif ("[Tank Temp Now]" in device.Name):
         value = str(float(devicejson['status'][0]['tankStatus'][0]['temparatureNow']))
+    elif ("[kWh]" in device.Name):
+        kWh = get_historic_data(device.DeviceID)
+        value = f'{str(float(kWh))};{str(float(kWh))}'
     #Domoticz.Debug(f"Device ID: {device.DeviceID}, Name: {device.Name}, value: {value}")
     # update value only if value has changed
     if (device.sValue != str(value)):
