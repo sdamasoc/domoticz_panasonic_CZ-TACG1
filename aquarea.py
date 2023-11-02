@@ -268,7 +268,7 @@ def handle_aquarea(device, devicejson):
     elif ("[Tank Temp Now]" in device.Name):
         value = str(float(devicejson['status'][0]['tankStatus'][0]['temparatureNow']))
     elif ("[kWh]" in device.Name):
-        kWh = get_historic_data(device.DeviceID)
+        kWh = get_historic_data(device.DeviceID)*1000 # historic data is in kWh, domoticz wants W
         value = f'{str(float(kWh))};{str(float(kWh))}'
     #Domoticz.Debug(f"Device ID: {device.DeviceID}, Name: {device.Name}, value: {value}")
     # update value only if value has changed

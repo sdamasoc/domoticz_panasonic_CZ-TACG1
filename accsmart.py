@@ -239,7 +239,7 @@ def handle_accsmart(device, devicejson):
         airswing = int(devicejson['parameters']['airSwingUD'])
         value = str((airswing + 1) * 10)
     elif ("[kWh]" in device.Name):
-        kWh = get_historic_data(device.DeviceID)
+        kWh = get_historic_data(device.DeviceID)*1000 # historic data is in kWh, domoticz wants W
         value = f'{str(float(kWh))};{str(float(kWh))}'
 
     # update value only if value has changed
