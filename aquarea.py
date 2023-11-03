@@ -197,8 +197,6 @@ def handle_api_version_update():
 
 
 def add_device(devicename, nbdevices):
-    # Domoticz.Log("Creating device " + devicename + ", DeviceID=" + deviceid + ", Unit="+ str(nbdevices) +".")
-
     # aquarea has a special token
     config.aquarea_token = get_aquarea_token()
     # load the device
@@ -206,6 +204,8 @@ def add_device(devicename, nbdevices):
 
     deviceConf=device['deviceConf']
     selectedDeviceId=device['selectedDeviceId']
+
+    Domoticz.Log(f"Creating aquarea devices for {devicename}, DeviceID={selectedDeviceId}, Unit={nbdevices}...")
 
     if deviceConf['configration']:
         for zone in deviceConf['configration'][0]['zoneInfo']:
@@ -239,7 +239,8 @@ def add_device(devicename, nbdevices):
     
             # energyConsumption
             nbdevices = nbdevices + 1
-            Domoticz.Device(Name=devicename + "[kWh]", Unit=nbdevices, TypeName="kWh", Used=1, DeviceID=selectedDeviceId).Create()
+            Options={'EnergyMeterMode': '1' }
+            Domoticz.Device(Name=devicename + "[kWh]", Unit=nbdevices, TypeName="kWh", Used=1, Options=Options, DeviceID=selectedDeviceId).Create()
     else:
         Domoticz.Log(f"Device {devicename} is not responding")
 

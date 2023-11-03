@@ -165,7 +165,7 @@ def dump_http_response_to_log(httpResp, level=0):
 ########################
 
 def add_device(devicename, deviceid, nbdevices):
-    Domoticz.Log("Creating device " + devicename + ", DeviceID=" + deviceid + ", Unit="+ str(nbdevices) +".")
+    Domoticz.Log(f"Creating accsmart devices for {devicename}, DeviceID={deviceid}, Unit={nbdevices}...")
     # TODO check if device is support before creation ("airSwingLR":true,"nanoe":false,"autoMode":true,"autoSwingUD":false,"ecoNavi":false,...)
     nbdevices = nbdevices + 1
     Domoticz.Device(Name=devicename + "[Power]", Unit=nbdevices, Image=16, TypeName="Switch", Used=1, DeviceID=deviceid).Create()
@@ -194,16 +194,14 @@ def add_device(devicename, deviceid, nbdevices):
     Domoticz.Device(Name=devicename + "[Eco Mode]", Unit=nbdevices, TypeName="Selector Switch", Image=7, Options=Options, Used=1, DeviceID=deviceid).Create()
 
     # airSwingUD => 0,3,2,4,1 (weird)
-    Options = {"LevelActions": "|||||||", "LevelNames": "Up|Down|Mid|UpMid|DownMid",
-                "LevelOffHidden": "true", "SelectorStyle": "1"}
+    Options = {"LevelActions": "|||||||", "LevelNames": "Up|Down|Mid|UpMid|DownMid", "LevelOffHidden": "true", "SelectorStyle": "1"}
     nbdevices = nbdevices + 1
-    Domoticz.Device(Name=devicename + "[Air Swing]", Unit=nbdevices,
-                    TypeName="Selector Switch", Image=7, Options=Options, Used=1,
-                    DeviceID=deviceid).Create()
+    Domoticz.Device(Name=devicename + "[Air Swing]", Unit=nbdevices, TypeName="Selector Switch", Image=7, Options=Options, Used=1, DeviceID=deviceid).Create()
     
     # energyConsumption
     nbdevices = nbdevices + 1
-    Domoticz.Device(Name=devicename + "[kWh]", Unit=nbdevices, TypeName="kWh", Used=1, DeviceID=deviceid).Create()
+    Options={'EnergyMeterMode': '1' }    
+    Domoticz.Device(Name=devicename + "[kWh]", Unit=nbdevices, TypeName="kWh", Used=1, Options=Options, DeviceID=deviceid).Create()
 
     # TODO add other switches?
 

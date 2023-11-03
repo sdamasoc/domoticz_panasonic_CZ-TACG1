@@ -83,6 +83,12 @@ class PanasonicCZTACG1Plugin:
         # loop found devices to create then in domoticz
         nbdevices = len(config.devices)  # (nbdevices:=nbdevices+1) = ++nbdevices
 
+        Domoticz.Log("##################################################################################")
+        for x in list(Devices):
+            Domoticz.Log(f"Removing existing device: {Devices[x].Name}...")
+            Devices[x].Delete()
+        Domoticz.Log("##################################################################################")
+
         for group in panasonic_devices['groupList']:
             groupname = group['groupName']
             for device in group['deviceList']:
