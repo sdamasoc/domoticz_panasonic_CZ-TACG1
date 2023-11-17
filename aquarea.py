@@ -92,14 +92,24 @@ def get_historic_data(device_id):
     response = requests.get(url=url, headers=headers)
     #Domoticz.Log(f"get_historic_data={response.text}")
     res=handle_response(response, lambda: get_historic_data(device_id))
-    total_sum = 0
+    energyConsumption  = 0
     for date_data in res['dateData']:
         for data_set in date_data['dataSets']:
             if data_set['name'] == 'energyShowing':
                 for data in data_set['data']:
-                    if data['name'] != 'Consume' and data['values']:
-                        total_sum += sum(value for value in data['values'] if value is not None)
-    return total_sum
+                    if data['name'] == 'Consume' and data['values']:
+                        consume_data = data
+    energyConsumption  += sum(value for value in consume_data['values'] if value is not None)
+    energyConsumption  = int(energyConsumption  * 1000)
+
+    last_hour=int(f"{datetime.now().strftime('%H')}")
+    last_consumption_value = consume_data["values"][(last_hour)] 
+    if not last_consumption_value:
+        last_consumption_value = consume_data["values"][(last_hour - 1)] 
+    last_consumption_value = int(last_consumption_value * 1000)
+    
+    Domoticz.Log(f"get_historic_data for {device_id} = {last_consumption_value};{energyConsumption}")
+    return f'{last_consumption_value};{energyConsumption}'
 
 # call the api to update device parameter
 def update_device_id(device_id, target, parameter_name, parameter_value):
@@ -239,8 +249,10 @@ def add_device(devicename, nbdevices):
     
             # energyConsumption
             nbdevices = nbdevices + 1
-            Options={'EnergyMeterMode': '1' }
-            Domoticz.Device(Name=devicename + "[kWh]", Unit=nbdevices, TypeName="kWh", Used=1, Options=Options, DeviceID=selectedDeviceId).Create()
+            Options={'EnergyMeterMode': '1' }            
+            Domoticz.Device(Name=devicename + "[Energy]", Unit=nbdevices, TypeName="kWh", Options=Options, Used=1, DeviceID=selectedDeviceId).Create()
+
+            Domoticz.Log(f"Device " + devicename + " created (DeviceID={selectedDeviceId}).")
     else:
         Domoticz.Log(f"Device {devicename} is not responding")
 
@@ -268,9 +280,9 @@ def handle_aquarea(device, devicejson):
         value = str(float(devicejson['status'][0]['tankStatus'][0]['heatSet']))
     elif ("[Tank Temp Now]" in device.Name):
         value = str(float(devicejson['status'][0]['tankStatus'][0]['temparatureNow']))
-    elif ("[kWh]" in device.Name):
-        kWh = get_historic_data(device.DeviceID)*1000 # historic data is in kWh, domoticz wants W
-        value = f'{str(float(kWh))};{str(float(kWh))}'
+    elif ("[Energy]" in device.Name):
+        value = get_historic_data(device.DeviceID) # historic data is in kWh, domoticz wants W
+
     #Domoticz.Debug(f"Device ID: {device.DeviceID}, Name: {device.Name}, value: {value}")
     # update value only if value has changed
     if (device.sValue != str(value)):

@@ -1,8 +1,8 @@
 [![CodeQL](https://github.com/sdamasoc/domoticz_panasonic_CZ-TACG1/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/sdamasoc/domoticz_panasonic_CZ-TACG1/actions/workflows/codeql-analysis.yml)
 
-# Domoticz python plugin for Panasonic CZ-TACG1 wifi adapter
-A Python plugin for Domoticz to communicate with Panasonic Cloud Comfort.
-It was designed for CZ-TACG1 WiFi adapter but should work with all Panasonic Cloud Comfort devices.
+# Domoticz python plugin for Panasonic Comfort Cloud devices
+A Python plugin for Domoticz to communicate with Panasonic Comfort Cloud API.
+It was designed for CZ-TACG1 WiFi adapter but should work with other Panasonic Cloud Comfort devices such as Aquarea devices.
 
 # Getting started
 If you don't have git:

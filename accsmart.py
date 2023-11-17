@@ -68,8 +68,13 @@ def get_historic_data(device_id):
     response = send_request("POST", url, headers=headers, data=payload)
     #Domoticz.Log("get_historic_data=" + response.text)
     res = handle_response(response, lambda: get_historic_data(device_id))
-    kWh = res["energyConsumption"]
-    return kWh
+    energyConsumption = int(res["energyConsumption"] * 1000)
+
+    last_hour=int(f"{datetime.now().strftime('%H')}")
+    last_consumption_value = int(res["historyDataList"][(last_hour-1)]["consumption"] * 1000 )
+    
+    Domoticz.Log(f"get_historic_data for {device_id}  = {last_consumption_value};{energyConsumption}")
+    return f'{last_consumption_value};{energyConsumption}'
 
 # call the api to update device parameter
 def update_device_id(device_id, parameter_name, parameter_value):
@@ -200,8 +205,8 @@ def add_device(devicename, deviceid, nbdevices):
     
     # energyConsumption
     nbdevices = nbdevices + 1
-    Options={'EnergyMeterMode': '1' }    
-    Domoticz.Device(Name=devicename + "[kWh]", Unit=nbdevices, TypeName="kWh", Used=1, Options=Options, DeviceID=deviceid).Create()
+    Options={'EnergyMeterMode': '1' }
+    Domoticz.Device(Name=devicename + "[Energy]", Unit=nbdevices, TypeName="kWh", Options=Options, Used=1, DeviceID=deviceid).Create()
 
     # TODO add other switches?
 
@@ -236,9 +241,8 @@ def handle_accsmart(device, devicejson):
     elif ("[Air Swing]" in device.Name):
         airswing = int(devicejson['parameters']['airSwingUD'])
         value = str((airswing + 1) * 10)
-    elif ("[kWh]" in device.Name):
-        kWh = get_historic_data(device.DeviceID)*1000 # historic data is in kWh, domoticz wants W
-        value = f'{str(float(kWh))};{str(float(kWh))}'
+    elif ("[Energy]" in device.Name):
+        value = get_historic_data(device.DeviceID) # historic data is in kWh, domoticz wants W
 
     # update value only if value has changed
     if (device.sValue != value):
