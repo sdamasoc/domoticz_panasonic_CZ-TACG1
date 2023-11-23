@@ -245,7 +245,7 @@ def handle_accsmart(device, devicejson):
         value = get_historic_data(device.DeviceID) # historic data is in kWh, domoticz wants W
 
     # update value only if value has changed
-    if (device.sValue != value):
+    if (device.sValue != value and not value.startswith('-255')):
         device.Update(nValue=power, sValue=value)
 
 
