@@ -93,12 +93,17 @@ def get_historic_data(device_id):
     #Domoticz.Log(f"get_historic_data={response.text}")
     res=handle_response(response, lambda: get_historic_data(device_id))
     energyConsumption  = 0
-    for date_data in res['dateData']:
-        for data_set in date_data['dataSets']:
-            if data_set['name'] == 'energyShowing':
-                for data in data_set['data']:
-                    if data['name'] == 'Consume' and data['values']:
-                        consume_data = data
+    if res['dateData']:
+        for date_data in res['dateData']:
+            for data_set in date_data['dataSets']:
+                if data_set['name'] == 'energyShowing':
+                    for data in data_set['data']:
+                        if data['name'] == 'Consume' and data['values']:
+                            consume_data = data
+    else:
+        Domoticz.Error(f"No res['dateData'] found in get_historic_data !!!")
+        Domoticz.Log(f"get_historic_data={response.text}")
+        return '-255;0' # return a dummy value to skip
     energyConsumption  += sum(value for value in consume_data['values'] if value is not None)
     energyConsumption  = int(energyConsumption  * 1000)
 
@@ -106,6 +111,8 @@ def get_historic_data(device_id):
     last_consumption_value = consume_data["values"][(last_hour)] 
     if not last_consumption_value:
         last_consumption_value = consume_data["values"][(last_hour - 1)] 
+    if not last_consumption_value:
+        last_consumption_value = -255
     last_consumption_value = int(last_consumption_value * 1000)
     
     Domoticz.Log(f"get_historic_data for {device_id} = {last_consumption_value};{energyConsumption}")
@@ -162,7 +169,7 @@ def get_headers(aquarea_token=None, device_id=None, device_gwid=None):
         if device_id:
             headers['Cookie']=f'accessToken={config.aquarea_token}; selectedDeviceId={device_id};'
         if device_gwid:
-            headers['Cookie']=f'selectedGwid=B302046413; selectedDeviceId={device_id}; deviceControlDate={int(time.time())}; accessToken={config.aquarea_token}; selectedDeviceId={device_id}; operationDeviceTop=2'
+            headers['Cookie']=f'selectedGwid={device_gwid}; selectedDeviceId={device_id}; deviceControlDate={int(time.time())}; accessToken={config.aquarea_token}; selectedDeviceId={device_id}; operationDeviceTop=2'
     return headers
 
 def send_request(method, url, headers=None, data=None):
@@ -285,7 +292,7 @@ def handle_aquarea(device, devicejson):
 
     #Domoticz.Debug(f"Device ID: {device.DeviceID}, Name: {device.Name}, value: {value}")
     # update value only if value has changed
-    if (device.sValue != str(value)):
+    if (device.sValue != str(value) and not str(value).startswith('-255')):
         nValue = power_pump
         if "Tank" in device.Name:
             nValue = power_tank
