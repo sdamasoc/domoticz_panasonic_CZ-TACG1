@@ -197,6 +197,8 @@ def handle_response(response, retry_func):
         if error_text in response.text:
             handler()
             return retry_func()
+        elif '"errorMessage":' in response.text:
+            Domoticz.Error(f"error not handled in response {response.text} for retry_func={retry_func}")
     return json.loads(response.text)
 
 def handle_token_expiration():
