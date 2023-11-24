@@ -93,7 +93,7 @@ def get_historic_data(device_id):
     #Domoticz.Log(f"get_historic_data={response.text}")
     res=handle_response(response, lambda: get_historic_data(device_id))
     energyConsumption  = 0
-    if res['dateData']:
+    if 'dateData' in res:
         for date_data in res['dateData']:
             for data_set in date_data['dataSets']:
                 if data_set['name'] == 'energyShowing':
