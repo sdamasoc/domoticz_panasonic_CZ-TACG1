@@ -88,7 +88,7 @@ def load_device_details(device_id):
 # load device details
 def get_historic_data(device_id):
     url=f"{config.aquarea_url}/remote/v1/api/consumption/{device_id}?date={datetime.now().strftime('%Y-%m-%d')}&_={int(time.time())}"
-    headers=get_headers(config.aquarea_token, device_id, device_id[6:17])
+    headers=get_headers(config.aquarea_token, device_id, device_id[6:16])
     response = requests.get(url=url, headers=headers)
     #Domoticz.Log(f"get_historic_data={response.text}")
     res=handle_response(response, lambda: get_historic_data(device_id))
@@ -102,7 +102,9 @@ def get_historic_data(device_id):
                             consume_data = data
     else:
         Domoticz.Error(f"No res['dateData'] found in get_historic_data !!!")
-        Domoticz.Log(f"get_historic_data={response.text}")
+        Domoticz.Log(f"url={url}")
+        Domoticz.Log(f"headers={headers}")
+        Domoticz.Log(f"response={response.text}")
         return '-255;0' # return a dummy value to skip
     energyConsumption  += sum(value for value in consume_data['values'] if value is not None)
     energyConsumption  = int(energyConsumption  * 1000)
