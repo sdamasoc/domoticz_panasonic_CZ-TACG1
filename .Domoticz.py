@@ -6,7 +6,7 @@ import plugin
 Parameters = {
         "Mode1": 60,
         "Mode2": "Debug",
-        "Mode3": "1.19.0",
+        "Mode3": "1.20.0",
         "Username": "<YOUR_USERNAME>",
         "Password": "<YOUR_PASSWORD>"
     }
