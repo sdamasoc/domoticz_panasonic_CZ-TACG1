@@ -3,3 +3,7 @@
 *.ipr
 .idea/
 __pycache__
+Domoticz.py
+.api_version
+.aquareatoken
+.accsmarttoken

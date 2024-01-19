@@ -13,7 +13,6 @@
         <p>The API version can also be given when an API update is available.</p>
     </description>
     <params>
-        <param field="Address" label="IP Address" width="200px" required="true" default="https://accsmart.panasonic.com"/>
         <param field="Username" label="Username" width="200px" required="true" default=""/>
         <param field="Password" label="Password" width="200px" required="true" default=""/>
         <param field="Mode1" label="Update every x seconds" width="75px">
@@ -40,8 +39,11 @@
 """
 import Domoticz
 import time
-from pluginfunctions import dump_http_response_to_log, get_devices, get_device_by_id, update_device_id, get_app_version, get_token
+import accsmart
+import aquarea
 import config
+import common
+import os
 # to test locally uncomment this line, rename .Domoticz.py to Domoticz.py and set your cvredentials in Domoticz.py
 # from Domoticz import Parameters, Devices
 
@@ -58,15 +60,15 @@ class PanasonicCZTACG1Plugin:
         config.update_interval = int(Parameters["Mode1"])
         config.debug_level = Parameters["Mode2"]
         config.api_version = Parameters["Mode3"]
-        config.address = Parameters["Address"]
         config.username = Parameters["Username"]
         config.password = Parameters["Password"]
         config.devices = Devices
 
         Domoticz.Debug("onStart called")
         # 1st try to get last version of the plugin
-        config.api_version = get_app_version()
-        config.token = get_token();
+        config.api_version = common.get_app_version()
+        config.token = accsmart.get_token()
+        config.aquarea_token = aquarea.get_aquarea_token()
 
         if config.debug_level == "Debug":
             # 0: None. All Python and framework debugging is disabled.
@@ -76,10 +78,16 @@ class PanasonicCZTACG1Plugin:
             Domoticz.Debugging(2)
 
         # get devices list
-        panasonic_devices = get_devices()
+        panasonic_devices = accsmart.get_devices()
 
         # loop found devices to create then in domoticz
         nbdevices = len(config.devices)  # (nbdevices:=nbdevices+1) = ++nbdevices
+
+        Domoticz.Log("##################################################################################")
+        for x in list(Devices):
+            Domoticz.Log(f"Removing existing device: {Devices[x].Name}...")
+            Devices[x].Delete()
+        Domoticz.Log("##################################################################################")
 
         for group in panasonic_devices['groupList']:
             groupname = group['groupName']
@@ -90,116 +98,55 @@ class PanasonicCZTACG1Plugin:
 
                 exist = False
                 for x in config.devices:
-                    Domoticz.Debug("x="+str(x)+",DeviceID="+ config.devices[x].DeviceID + ", Name="+config.devices[x].Name + "Dump=" + str(config.devices[x]));
+                    # Domoticz.Debug("x="+str(x)+",DeviceID="+ config.devices[x].DeviceID + ", Name="+config.devices[x].Name + "Dump=" + str(config.devices[x]));
                     # check if there's an unitId > nbdevices
                     if (x > nbdevices):
                         nbdevices = x
                     # check if device already exist in Domoticz
-                    if (deviceid == config.devices[x].DeviceID):
+                    if (devicename in config.devices[x].Name):
                         exist = True
 
                 if exist :
                     Domoticz.Log("Device " + devicename + " already exists in domoticz (DeviceID=" + deviceid + ").")
-                elif(deviceType != "1"):
-                    print("DEVICE TYPE " + deviceType + "IS NOT SUPPORTED YET") 
+                elif(deviceType == "2"):
+                    Domoticz.Log("Aquarea devices (deviceType=" + deviceType + ") IS IN ALPHA MODE") 
+                    aquarea.add_device(devicename, nbdevices)
                 else :
-                    Domoticz.Log("Creating device " + devicename + ", DeviceID=" + deviceid + ", Unit="+ str(nbdevices) +".")
-                    # TODO check if device is support before creation ("airSwingLR":true,"nanoe":false,"autoMode":true,"autoSwingUD":false,"ecoNavi":false,...)
-                    nbdevices = nbdevices + 1
-                    Domoticz.Device(Name=devicename + "[Power]", Unit=nbdevices, Image=16,
-                                    TypeName="Switch", Used=1, DeviceID=deviceid).Create()
-
-                    nbdevices = nbdevices + 1
-                    Domoticz.Device(Name=devicename + "[Room Temp]", Unit=nbdevices,
-                                    TypeName="Temperature", Used=1, DeviceID=deviceid).Create()
-
-                    nbdevices = nbdevices + 1
-                    Domoticz.Device(Name=devicename + "[Outdoor Temp]", Unit=nbdevices,
-                                    TypeName="Temperature", Used=1, DeviceID=deviceid).Create()
-
-                    nbdevices = nbdevices + 1
-                    Domoticz.Device(Name=devicename + "[Target temp]", Unit=nbdevices, Type=242,
-                                    Subtype=1, Image=16, Used=1, DeviceID=deviceid).Create()
-
-                    # operationMode
-                    Options = {"LevelActions": "|||||", "LevelNames": "|Auto|Dry|Cool|Heat|Fan",
-                               "LevelOffHidden": "true", "SelectorStyle": "1"}
-                    nbdevices = nbdevices + 1
-                    Domoticz.Device(Name=devicename + "[Mode]", Unit=nbdevices,
-                                    TypeName="Selector Switch", Image=16, Options=Options, Used=1,
-                                    DeviceID=deviceid).Create()
-
-                    # fanSpeed
-                    Options = {"LevelActions": "|||||||", "LevelNames": "|Auto|Low|LowMid|Mid|HighMid|High",
-                               "LevelOffHidden": "true", "SelectorStyle": "1"}
-                    nbdevices = nbdevices + 1
-                    Domoticz.Device(Name=devicename + "[Fan Speed]", Unit=nbdevices,
-                                    TypeName="Selector Switch", Image=7, Options=Options, Used=1,
-                                    DeviceID=deviceid).Create()
-                    # ecoMode
-                    Options = {"LevelActions": "|||||||", "LevelNames": "|Auto|Powerful|Quiet",
-                               "LevelOffHidden": "true", "SelectorStyle": "1"}
-                    nbdevices = nbdevices + 1
-                    Domoticz.Device(Name=devicename + "[Eco Mode]", Unit=nbdevices,
-                                    TypeName="Selector Switch", Image=7, Options=Options, Used=1,
-                                    DeviceID=deviceid).Create()
-
-                    # airSwingUD => 0,3,2,4,1 (weird)
-                    Options = {"LevelActions": "|||||||", "LevelNames": "Up|Down|Mid|UpMid|DownMid",
-                               "LevelOffHidden": "true", "SelectorStyle": "1"}
-                    nbdevices = nbdevices + 1
-                    Domoticz.Device(Name=devicename + "[Air Swing]", Unit=nbdevices,
-                                    TypeName="Selector Switch", Image=7, Options=Options, Used=1,
-                                    DeviceID=deviceid).Create()
-
-                    # TODO add other switches?
-
-                    Domoticz.Log("Device " + devicename + " created (DeviceID=" + deviceid + ").")
+                    accsmart.add_device(devicename, deviceid, nbdevices)
 
         onHeartbeat()
-        dump_config_to_log()
+        #dump_config_to_log()
 
         Domoticz.Debug("onStart end")
 
     def onStop(self):
         Domoticz.Debug("onStop called")
+        if os.path.exists(config.token_file_path):
+            os.remove(config.token_file_path)
+        if os.path.exists(config.aquarea_token_file_path):
+            os.remove(config.aquarea_token_file_path)
+        if os.path.exists(config.api_version_file_path):
+            os.remove(config.api_version_file_path)
+        Domoticz.Debug("onStop end")
 
     def onConnect(self, Connection, Status, Description):
         Domoticz.Debug("onConnect called, Status=" + str(Status))
 
     def onMessage(self, Connection, Data):
         Domoticz.Debug("onMessage called")
-        dump_http_response_to_log(Data)
+        accsmart.dump_http_response_to_log(Data)
 
     def onCommand(self, Unit, Command, Level, Hue):
         Domoticz.Log("Command received for device Name=" + config.devices[Unit].Name + "(deviceId=" + config.devices[
             Unit].DeviceID + ") U=" + str(Unit) + " C=" + str(Command) + " L=" + str(Level) + " H=" + str(Hue))
 
-        if (Command == "On"):
-            update_device_id(config.devices[Unit].DeviceID, "operate", 1)
-            config.devices[Unit].Update(nValue=1, sValue="100")
-            self.powerOn = 1
-        elif (Command == "Off"):
-            update_device_id(config.devices[Unit].DeviceID, "operate", 0)
-            config.devices[Unit].Update(nValue=0, sValue="0")
-            self.powerOn = 0
-        elif (Command == "Set Level"):
-            if (config.devices[Unit].nValue != self.powerOn or (config.devices[Unit].sValue != Level) and Level != "--"):
-                if ("[Target temp]" in config.devices[Unit].Name):
-                    update_device_id(config.devices[Unit].DeviceID, "temperatureSet", float(Level))
-                if ("[Mode]" in config.devices[Unit].Name):
-                    operationmode = (Level / 10) - 1
-                    update_device_id(config.devices[Unit].DeviceID, "operationMode", int(operationmode))
-                elif ("[Fan Speed]" in config.devices[Unit].Name):
-                    fanspeed = (Level / 10) - 1
-                    update_device_id(config.devices[Unit].DeviceID, "fanSpeed", int(fanspeed))
-                elif ("[Eco Mode]" in config.devices[Unit].Name):
-                    ecomode = (Level / 10) - 1
-                    update_device_id(config.devices[Unit].DeviceID, "ecoMode", int(ecomode))
-                elif ("[Air Swing]" in config.devices[Unit].Name):
-                    airswing = (Level / 10) - 1
-                    update_device_id(config.devices[Unit].DeviceID, "airSwingUD", int(airswing))
-                config.devices[Unit].Update(nValue=self.powerOn, sValue=str(Level))
+        if len(config.devices[Unit].DeviceID) < 20:
+            # handle accsmart
+            accsmart.update_accsmart(self, Command, Level, config.devices[Unit])
+        else:
+            # handle aquarea
+            aquarea.update_aquarea(self, Command, Level, config.devices[Unit])
+
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
         Domoticz.Log("Notification: " + Name + "," + Subject + "," + Text + "," + Status + "," + str(
@@ -215,51 +162,28 @@ class PanasonicCZTACG1Plugin:
         if time.time() - self.last_update < update_interval:
             Domoticz.Debug("update interval not reached")
             return
+        previous_id = None
         deviceid = None
         devicejson = None
-        power = 0
-        value = "----"
         for x in config.devices:
-            if (deviceid != config.devices[x].DeviceID):
-                deviceid = config.devices[x].DeviceID
-                devicejson = get_device_by_id(deviceid)
-            if (devicejson.get('parameters') is None):
-                # the device is offline
-                Domoticz.Log("The device " + deviceid + " return an error (code=" + str(devicejson.get('code')) + ", message=" + str(devicejson.get('message')) + ")")
-                continue
-            # device type 2 seems to be a waterpump => different api
-            if (devicejson.get('deviceType') == "2"):
-                Domoticz.Log("!!! The device " + deviceid + " is not yet supported !!!")
-                Domoticz.Log("dump json for " + deviceid + ": " + devicejson)
-                continue
-            if ("[Target temp]" in config.devices[x].Name):
-                value = str(float(devicejson['parameters']['temperatureSet']))
-            elif ("[Room Temp]" in config.devices[x].Name):
-                value = str(float(devicejson['parameters']['insideTemperature']))
-            elif ("[Outdoor Temp]" in config.devices[x].Name):
-                if (float(devicejson['parameters']['outTemperature']) > 100):
-                    value = "--"
-                else:
-                    value = str(float(devicejson['parameters']['outTemperature']))
-            elif ("[Power]" in config.devices[x].Name):
-                power = int(devicejson['parameters']['operate'])
-                value = str(power * 100)
-            elif ("[Mode]" in config.devices[x].Name):
-                operationmode = int(devicejson['parameters']['operationMode'])
-                value = str((operationmode + 1) * 10)
-            elif ("[Fan Speed]" in config.devices[x].Name):
-                fanspeed = int(devicejson['parameters']['fanSpeed'])
-                value = str((fanspeed + 1) * 10)
-            elif ("[Eco Mode]" in config.devices[x].Name):
-                ecomode = int(devicejson['parameters']['ecoMode'])
-                value = str((ecomode + 1) * 10)
-            elif ("[Air Swing]" in config.devices[x].Name):
-                airswing = int(devicejson['parameters']['airSwingUD'])
-                value = str((airswing + 1) * 10)
+            deviceid = config.devices[x].DeviceID
+            if len(deviceid) < 70:
+                if previous_id != deviceid:
+                    deviceid = config.devices[x].DeviceID
+                    devicejson = accsmart.get_device_by_id(deviceid)
+                if (devicejson.get('parameters') is None):
+                    # the device is offline
+                    Domoticz.Log("The device " + deviceid + " return an error (code=" + str(devicejson.get('code')) + ", message=" + str(devicejson.get('message')) + ")")
+                    continue
+                accsmart.handle_accsmart(config.devices[x], devicejson)
+            else:
+                if previous_id != deviceid:
+                    deviceid = config.devices[x].DeviceID
+                    devicejson = aquarea.load_device_details(deviceid)
+                aquarea.handle_aquarea(config.devices[x], devicejson)
+            previous_id = deviceid
 
-            # update value only if value has changed
-            if (config.devices[x].sValue != value):
-                config.devices[x].Update(nValue=power, sValue=value)
+
 
         # Domoticz.Debug("Device ID:       '" + str(config.devices[x].ID) + "'")
         # Domoticz.Debug("Device Name:     '" + config.devices[x].Name + "'")
