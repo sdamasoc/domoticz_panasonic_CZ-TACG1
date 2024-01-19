@@ -110,10 +110,11 @@ def get_historic_data(device_id):
     energyConsumption  = int(energyConsumption  * 1000)
 
     last_hour=int(f"{datetime.now().strftime('%H')}")
-    last_consumption_value = consume_data["values"][(last_hour)] 
-    if not last_consumption_value:
-        last_consumption_value = consume_data["values"][(last_hour - 1)] 
-    if not last_consumption_value:
+    last_consumption_value = None
+    if (last_hour-1) >=0:
+        last_consumption_value = consume_data["values"][(last_hour-1)] 
+    if not last_consumption_value and last_consumption_value is not 0:
+        Domoticz.Log(f"last_consumption_value for {device_id} return {last_consumption_value}, use -255")
         last_consumption_value = -255
     last_consumption_value = int(last_consumption_value * 1000)
     
@@ -294,7 +295,8 @@ def handle_aquarea(device, devicejson):
     elif ("[Energy]" in device.Name):
         value = get_historic_data(device.DeviceID) # historic data is in kWh, domoticz wants W
         if value.startswith('-255'):
-            value = device.sValue  # keep actual value
+            Domoticz.Log(f"keep previous value of get_historic_data for {device.DeviceID} = {device.sValue}")
+            value = device.sValue  # keep previous value
 
     #Domoticz.Debug(f"Device ID: {device.DeviceID}, Name: {device.Name}, value: {value}")
     # update value only if value has changed

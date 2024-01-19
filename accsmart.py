@@ -72,6 +72,9 @@ def get_historic_data(device_id):
 
     last_hour=int(f"{datetime.now().strftime('%H')}")
     last_consumption_value = int(res["historyDataList"][(last_hour-1)]["consumption"] * 1000 )
+    if not last_consumption_value:
+        Domoticz.Log(f"last_consumption_value for {device_id} return {last_consumption_value}, use -255")
+        last_consumption_value = -255
     
     Domoticz.Log(f"get_historic_data for {device_id}  = {last_consumption_value};{energyConsumption}")
     return f'{last_consumption_value};{energyConsumption}'
@@ -246,7 +249,8 @@ def handle_accsmart(device, devicejson):
     elif ("[Energy]" in device.Name):
         value = get_historic_data(device.DeviceID) # historic data is in kWh, domoticz wants W
         if value.startswith('-255'):
-            value = device.sValue  # keep actual value
+            Domoticz.Log(f"keep previous value of get_historic_data for {device.DeviceID} = {device.sValue}")
+            value = device.sValue  # keep previous value
 
     # update value only if value has changed
     if (device.sValue != value):
