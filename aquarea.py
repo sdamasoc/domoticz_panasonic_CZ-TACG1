@@ -261,7 +261,7 @@ def add_device(devicename, nbdevices):
     
             # energyConsumption
             nbdevices = nbdevices + 1
-            Options={'EnergyMeterMode': '1' }            
+            Options={'EnergyMeterMode': '0' }            
             Domoticz.Device(Name=devicename + "[Energy]", Unit=nbdevices, TypeName="kWh", Options=Options, Used=1, DeviceID=selectedDeviceId).Create()
 
             Domoticz.Log(f"Device " + devicename + " created (DeviceID={selectedDeviceId}).")

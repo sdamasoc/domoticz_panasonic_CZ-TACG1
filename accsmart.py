@@ -210,7 +210,8 @@ def add_device(devicename, deviceid, nbdevices):
     
     # energyConsumption
     nbdevices = nbdevices + 1
-    Options={'EnergyMeterMode': '1' }
+    #Use Options={'EnergyMeterMode': '1' } to set energyMeterMode to "Calculated". Default is "From Device"
+    Options={'EnergyMeterMode': '0' }
     Domoticz.Device(Name=devicename + "[Energy]", Unit=nbdevices, TypeName="kWh", Options=Options, Used=1, DeviceID=deviceid).Create()
 
     # TODO add other switches?
