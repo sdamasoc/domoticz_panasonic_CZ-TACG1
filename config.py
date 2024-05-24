@@ -15,3 +15,7 @@ aquarea_url = "https://aquarea-smart.panasonic.com"
 token_file_path = '.accsmarttoken'
 aquarea_token_file_path = '.aquareatoken'
 api_version_file_path = '.api_version'
+
+auth0_client = 'eyJuYW1lIjoiYXV0aDAuanMtdWxwIiwidmVyc2lvbiI6IjkuMjMuMiJ9'
+authglb_url = 'https://authglb.digital.panasonic.com'
+digital_panasonic_url = 'https://digital.panasonic.com'

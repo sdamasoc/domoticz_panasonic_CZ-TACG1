@@ -5,13 +5,10 @@ import Domoticz
 import config
 import urllib.parse
 import os
-import requests
-import json
-import Domoticz
-from datetime import datetime
-import config
 import common
 import time
+from datetime import datetime
+from html import unescape
 
 power_pump = 0
 power_tank = 0
@@ -33,17 +30,128 @@ def get_aquarea_token():
             Domoticz.Log("Reusing existing aquarea token=" + token)
             return token
     # else 
-    enc_username = urllib.parse.quote(config.username)
-    enc_password = urllib.parse.quote(config.password)
-
+    
+    ### start auth calls ###
+    # call 1
+    Domoticz.Debug("# call 1")
     headers=get_headers()
-    response = requests.post(
-        url=f'{config.aquarea_url}/remote/v1/api/auth/login',
-        headers=headers,
-        data=f'var.loginId={enc_username}&var.password={enc_password}&var.inputOmit=true'
-    )
+    response = requests.post(url=f'{config.aquarea_url}/remote/v1/api/auth/login', headers=headers)
+    cookies = response.cookies.get_dict()
+
+    com_auth0_state = cookies.get('com.auth0.state', None)
+    Domoticz.Debug(f'com_auth0_state: {com_auth0_state}')
+
+    jsonResponse = json.loads(response.text)
+    authorize_url = jsonResponse["authorizeUrl"] 
+    Domoticz.Debug(f'authorize_url: {authorize_url}')
+
+    # call 2
+    Domoticz.Debug("# call 2")
+    response = requests.get(url=authorize_url, allow_redirects=False)
+    cookies = response.cookies.get_dict()
+
+    location = response.headers["Location"]
+    Domoticz.Debug(f'location: {location}')
+    
+    auth0_compat = cookies.get('auth0_compat', None)
+    Domoticz.Debug(f'auth0_compat: {auth0_compat}')
+
+    auth0 = cookies.get('auth0', None)
+    Domoticz.Debug(f'auth0: {auth0}')
+
+    did = cookies.get('did', None)
+    Domoticz.Debug(f'did: {did}')
+
+    didCompat = cookies.get('did_compat', None)
+    Domoticz.Debug(f'didCompat: {didCompat}')
+
+    # call 3
+    Domoticz.Debug("# call 3")
+    headers= {
+        'Referer': config.aquarea_url,
+        'Cookie': f'auth0={auth0}; auth0_compat={auth0_compat}; did={did}; did_compat={didCompat};',
+    }
+    response = requests.get(url=f'{config.authglb_url}{location}', headers=headers, allow_redirects=False)
+    cookies = response.cookies.get_dict()
+    csrf = cookies.get('_csrf', None)
+    Domoticz.Debug(f'_csrf: {csrf}')
+
+    clientId=get_param_from_url(location, "client")
+    Domoticz.Debug(f'clientId: {clientId}')
+
+    state=get_param_from_url(location, "state")
+    Domoticz.Debug(f'state: {state}')
+
+    # call 4
+    Domoticz.Debug("# call 4")
+    headers={
+        'auth0-client': config.auth0_client,
+        'accept': '*/*',
+        'Content-Type': 'application/json;',
+        'content-type': 'application/json' ,
+        'referer': f'{config.authglb_url}{location}',
+        'cookie': f'_csrf={csrf}; auth0={auth0}; auth0_compat={auth0_compat}; did={did}; did_compat={didCompat};',
+    }
+    data={
+        "client_id": clientId,
+        "redirect_uri": f"{config.aquarea_url}/authorizationCallback?lang=en",
+        "tenant": "pdpauthglb-a1",
+        "response_type": "code",
+        "scope": "openid offline_access",
+        "audience": f"{config.digital_panasonic_url}/{clientId}/api/v1/",
+        "_csrf": csrf,
+        "state": state,
+        "_intstate": "deprecated",
+        "username": f"{config.username}",
+        "password": f"{config.password}",
+        "lang": "en",
+        "connection": "PanasonicID-Authentication",
+      }
+    response = requests.post(url=f'{config.authglb_url}/usernamepassword/login', headers=headers, json=data, allow_redirects=False)
+
+    action_url = extract_action_url(response.text)
+    form_data = extract_form_data(response.text)
+
+    Domoticz.Debug(f"Action URL: {action_url}")
+    Domoticz.Debug(f"Form Data: {form_data}")
+    
+    # call 5
+    Domoticz.Debug("# call 5")
+    headers['content-type']='application/x-www-form-urlencoded; charset=UTF-8'
+    response = requests.post(url=action_url, headers=headers, data=urllib.parse.urlencode(form_data), allow_redirects=False)
+
+    location = response.headers["Location"]
+    Domoticz.Debug(f"location={location}")
+
+    # call 6
+    Domoticz.Debug("# call 6")
+    headers={'cookie': f'_csrf={csrf}; auth0={auth0}; auth0_compat={auth0_compat}; did={did}; did_compat={didCompat};'}
+    response = requests.get(url=f'{config.authglb_url}{location}', headers=headers, data=urllib.parse.urlencode(form_data), allow_redirects=False)
+
+    cookies = response.cookies.get_dict()
+
+    auth0_compat = cookies.get('auth0_compat', None)
+    Domoticz.Debug(f'auth0_compat: {auth0_compat}')
+
+    auth0 = cookies.get('auth0', None)
+    Domoticz.Debug(f'auth0: {auth0}')
+
+    location = response.headers["Location"]
+    Domoticz.Debug(f"location={location}")
+
+    # call 7
+    Domoticz.Debug("# call 7")
+    headers={
+        'user-agent': 'curl/7.81.0',
+        'accept': '*/*',
+        'cookie': f'_csrf={csrf}; auth0={auth0}; auth0_compat={auth0_compat}; did={did}; did_compat={didCompat};'
+    }
+    response = requests.get(url=location, headers=headers, allow_redirects=False)
+
     cookies = response.cookies.get_dict()
     access_token = cookies.get('accessToken', None)
+    ### end auth calls ###
+
     if not access_token:
         Domoticz.Log(f'Could not authenticate to Aquarea Smart Panasonic: {response.text}')
         return None
@@ -53,7 +161,7 @@ def get_aquarea_token():
         with open(config.aquarea_token_file_path, 'w') as token_file:
             token_file.write(access_token)
         return access_token
-    
+
 # load device
 def load_device(retried=None):
     response = requests.post(
@@ -113,7 +221,7 @@ def get_historic_data(device_id):
     last_consumption_value = None
     if (last_hour-1) >=0:
         last_consumption_value = consume_data["values"][(last_hour-1)] 
-    if not last_consumption_value and last_consumption_value is not 0:
+    if not last_consumption_value and last_consumption_value != 0:
         Domoticz.Log(f"last_consumption_value for {device_id} return {last_consumption_value}, use -255")
         last_consumption_value = -255
     last_consumption_value = int(last_consumption_value * 1000)
@@ -165,6 +273,7 @@ def get_headers(aquarea_token=None, device_id=None, device_gwid=None):
         'X-CFC-API-KEY': '0',
         'X-APP-TIMESTAMP': common.get_timestamp(),
         'Registration-Id': '',
+        'popup-screen-id': '1001',
     }
     if aquarea_token:
         headers['Cookie']=f'accessToken={config.aquarea_token};'
@@ -261,6 +370,7 @@ def add_device(devicename, nbdevices):
     
             # energyConsumption
             nbdevices = nbdevices + 1
+            #Use Options={'EnergyMeterMode': '1' } to set energyMeterMode to "Calculated". Default is "From Device"
             Options={'EnergyMeterMode': '0' }            
             Domoticz.Device(Name=devicename + "[Energy]", Unit=nbdevices, TypeName="kWh", Options=Options, Used=1, DeviceID=selectedDeviceId).Create()
 
@@ -280,18 +390,18 @@ def handle_aquarea(device, devicejson):
         operationmode = int(devicejson['status'][0]['operationMode'])
         value = str(operationmode * 10)
     elif ("[Pump Heat Temp]" in device.Name):
-        value = str(float(devicejson['status'][0]['zoneStatus'][0]['heatSet']))
+        value = get_str_of_float(devicejson['status'][0]['zoneStatus'][0]['heatSet'])
     elif ("[Pump Temp Now]" in device.Name):
-        value = str(float(devicejson['status'][0]['zoneStatus'][0]['temparatureNow']))
+        value = get_str_of_float(devicejson['status'][0]['zoneStatus'][0]['temparatureNow'])
     elif ("[Outdoor Temp]" in device.Name):
-        value = str(float(devicejson['status'][0]['outdoorNow']))
+        value = get_str_of_float(devicejson['status'][0]['outdoorNow'])
     elif ("[Tank Power]" in device.Name):
         power_tank = int(devicejson['status'][0]['tankStatus'][0]['operationStatus'])
         value = str(power_tank * 100)
     elif ("[Tank Heat temp]" in device.Name):
-        value = str(float(devicejson['status'][0]['tankStatus'][0]['heatSet']))
+        value = get_str_of_float(devicejson['status'][0]['tankStatus'][0]['heatSet'])
     elif ("[Tank Temp Now]" in device.Name):
-        value = str(float(devicejson['status'][0]['tankStatus'][0]['temparatureNow']))
+        value = get_str_of_float(devicejson['status'][0]['tankStatus'][0]['temparatureNow'])
     elif ("[Energy]" in device.Name):
         value = get_historic_data(device.DeviceID) # historic data is in kWh, domoticz wants W
         if value.startswith('-255'):
@@ -306,6 +416,11 @@ def handle_aquarea(device, devicejson):
             nValue = power_tank
         device.Update(nValue=nValue, sValue=str(value))
 
+def get_str_of_float(value):
+    if (value):
+        return str(float(value))
+    else:
+        return "----"
 
 def update_aquarea(p, Command, Level, device):
     if (Command == "On"):
@@ -340,3 +455,27 @@ def mapModeLevel(Level):
         return 3 # 3=> set COLD
     elif Level == 30: 
         return 8 # 8=> set AUTO
+
+def get_param_from_url(url, param_name):
+    return [i.split("=")[-1] for i in url.split("?", 1)[-1].split("&") if i.startswith(param_name + "=")][0]
+
+def extract_action_url(data):
+    action_url_match = re.search(r'action="(.+?)"', data, re.IGNORECASE)
+    action_url = action_url_match.group(1) if action_url_match else None
+    return action_url
+
+def extract_form_data(data):
+    inputs = re.findall(r'<input([^>]+?)>', data, re.IGNORECASE) or []
+
+    # Créer le dictionnaire pour stocker les données du formulaire
+    form_data = {}
+
+    for input_tag in inputs:
+        name_match = re.search(r'name="(.+?)"', input_tag, re.IGNORECASE)
+        value_match = re.search(r'value="(.+?)"', input_tag, re.IGNORECASE)
+        
+        if name_match and value_match:
+            name = name_match.group(1)
+            value = unescape(value_match.group(1))
+            form_data[name] = value
+    return form_data

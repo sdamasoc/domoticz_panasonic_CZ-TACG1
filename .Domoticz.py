@@ -1,12 +1,10 @@
-import plugin
-
 # Mock Domoticz.py
 
 # change this values with your credentials
 Parameters = {
         "Mode1": 60,
         "Mode2": "Debug",
-        "Mode3": "1.20.0",
+        "Mode3": "1.20.1",
         "Username": "<YOUR_USERNAME>",
         "Password": "<YOUR_PASSWORD>"
     }
