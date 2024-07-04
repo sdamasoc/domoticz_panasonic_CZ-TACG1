@@ -6,124 +6,58 @@ from datetime import datetime
 import config
 import common
 
+from pcomfortcloud import ApiClient
+from pcomfortcloud import constants
+import pcomfortcloud
+
 ############################
 # Generic helper functions #
 ############################
 
 # call the api to get a token
-def get_token():
-    # if token already exist reuse it
-    if os.path.exists(config.token_file_path):
-        with open(config.token_file_path, 'r') as token_file:
-            token = token_file.read().strip()
-            Domoticz.Log("Reusing existing accsmart token=" + token)
-            return token
-    # else    
-    url = config.accsmart_url + "/auth/login"
-
-    payload = json.dumps({
-        "language": 0,
-        "loginId": config.username,
-        "password": config.password
-    })
-    headers=get_headers(with_token=False)
-    response = send_request("POST", url, headers=headers, data=payload)
-    Domoticz.Log("get_token=" + response.text)
-    res = json.loads(response.text)
-    token = res["uToken"] 
-    # save the token
-    with open(config.token_file_path, 'w') as token_file:
-        token_file.write(token)
-    return token
-
-
-# call the api to get device list
-def get_devices():
-    url = config.accsmart_url + "/device/group/"
-
-    headers = get_headers()
-    response = send_request("GET", url, headers=headers)
-    Domoticz.Log("get_devices=" + response.text)
-    return handle_response(response, lambda: get_devices())
+def get_client():
+    client = ApiClient(config.username, config.password)
+    client.start_session()
+    client.get_devices()
+    return client
 
 # call the api to get device infos
 def get_device_by_id(device_id):
-    url = config.accsmart_url + "/deviceStatus/now/" + device_id
-
-    headers = get_headers()
-    response = send_request("GET", url, headers=headers)
-    Domoticz.Log("get_device_by_id=" + response.text)
-    return handle_response(response, lambda: get_device_by_id(device_id))
+    #todo: use client api
+    #device_hash_guid=get_device_hash_guid(device_id)
+    #json_response=config.client.get_device(device_hash_guid)
+    json_response = config.client.execute_get(config.client._get_device_status_url(device_id), "get_device", 200)
+    Domoticz.Debug(f"in get_device_by_id, json_response={json_response}")
+    return json_response
 
 # call the api to get device historic data
 def get_historic_data(device_id):
-    url = config.accsmart_url + "/deviceHistoryData"
-    payload = json.dumps({
-        "dataMode": 0,
-        "date": common.get_date(),
-        "deviceGuid": device_id,
-        "osTimezone": "+01:00"
-    })
-    headers = get_headers()
-    response = send_request("POST", url, headers=headers, data=payload)
-    #Domoticz.Log("get_historic_data=" + response.text)
-    res = handle_response(response, lambda: get_historic_data(device_id))
-    energyConsumption = int(res["energyConsumption"] * 1000)
-
-    last_hour=int(f"{datetime.now().strftime('%H')}")
-    last_consumption_value = int(res["historyDataList"][(last_hour-1)]["consumption"] * 1000 )
-    if not last_consumption_value:
-        Domoticz.Log(f"last_consumption_value for {device_id} return {last_consumption_value}, use -255")
-        last_consumption_value = -255
-    
+    # TODO: implement this with new API
+    # config.client.history(...)
+    last_consumption_value = 0
+    energyConsumption = 0
+    Domoticz.Log("get_historic_data is not implemented with new API")
     Domoticz.Log(f"get_historic_data for {device_id}  = {last_consumption_value};{energyConsumption}")
     return f'{last_consumption_value};{energyConsumption}'
 
 # call the api to update device parameter
 def update_device_id(device_id, parameter_name, parameter_value):
-    Domoticz.Log("updating DeviceId=" + device_id + ", " + parameter_name + "=" + str(parameter_value) + "...")
+    device_hash_guid=get_device_hash_guid(device_id)
+    Domoticz.Log(f"updating DeviceId={device_id}, device_hash_guid={device_hash_guid}, {parameter_name}={parameter_value}...")
+    payload= {parameter_name: parameter_value}
+    res=config.client.set_device(device_hash_guid, **payload)
+    print(f'result of set_device={res}')   
+    #Domoticz.Log(f"payload={payload} url={config.client._get_device_status_control_url()}")
+    #response = config.client.execute_post(config.client._get_device_status_control_url(), payload, "set_device", 200)
 
-    url = config.accsmart_url + "/deviceStatus/control/"
-    
-    payload = json.dumps({
-        "deviceGuid": device_id,
-        "parameters": {parameter_name: parameter_value}
-    })
-    headers = get_headers()
-    response = send_request("POST", url, headers=headers, data=payload)
-    Domoticz.Log("update_device_id=" + response.text)
-    return handle_response(response, lambda: update_device_id(device_id, parameter_name, parameter_value))
-
-def get_headers(with_token=True):
-    headers = {
-        'X-APP-TYPE': '0',
-        'X-APP-VERSION': config.api_version,
-        'Accept': 'application/json; charset=UTF-8',
-        'Content-Type': 'application/json',
-        'User-Agent': 'G-RAC',
-        'X-APP-NAME': 'Comfort Cloud',
-        'X-CFC-API-KEY': '0',
-        'X-APP-TIMESTAMP': common.get_timestamp()
-    }
-    if with_token:
-        headers['X-User-Authorization']= config.token
-    return headers
-
-def send_request(method, url, headers=None, data=None):
-    try:
-        response = requests.request(method, url, headers=headers, data=data)
-        response.raise_for_status()
-        return response
-    except requests.RequestException as e:
-        #Domoticz.Error(f"Request failed: {e}")
-        return response
+    Domoticz.Log("update_device_id={res}")
+    return res
 
 def handle_response(response, retry_func):
     if response is None:
         return None
 
     error_handlers = {
-        "Token expires": handle_token_expiration,
         "New version app has been published": handle_api_version_update,
     }
 
@@ -135,13 +69,6 @@ def handle_response(response, retry_func):
             Domoticz.Error(f"error not handled in response {response.text} for retry_func={retry_func}")
 
     return json.loads(response.text)
-
-def handle_token_expiration():
-    Domoticz.Log("Token is expired, get a new token")
-    # if token file exists delete it
-    if os.path.exists(config.token_file_path):
-        os.remove(config.token_file_path)
-    config.token = get_token()
 
 def handle_api_version_update():
     Domoticz.Log("New version app has been published")
@@ -261,27 +188,34 @@ def handle_accsmart(device, devicejson):
 
 def update_accsmart(p, Command, Level, device):
     if (Command == "On"):
-        update_device_id(device.DeviceID, "operate", 1)
+        update_device_id(device.DeviceID, "power", pcomfortcloud.constants.Power.On)
         device.Update(nValue=1, sValue="100")
         p.powerOn = 1
     elif (Command == "Off"):
-        update_device_id(device.DeviceID, "operate", 0)
+        update_device_id(device.DeviceID, "power", pcomfortcloud.constants.Power.Off)
         device.Update(nValue=0, sValue="0")
         p.powerOn = 0
     elif (Command == "Set Level"):
         if (device.nValue != p.powerOn or (device.sValue != Level) and Level != "--"):
             if ("[Target temp]" in device.Name):
-                update_device_id(device.DeviceID, "temperatureSet", float(Level))
+                update_device_id(device.DeviceID, "temperature", float(Level))
             if ("[Mode]" in device.Name):
                 operationmode = (Level / 10) - 1
-                update_device_id(device.DeviceID, "operationMode", int(operationmode))
+                update_device_id(device.DeviceID, "mode", int(operationmode))
             elif ("[Fan Speed]" in device.Name):
                 fanspeed = (Level / 10) - 1
                 update_device_id(device.DeviceID, "fanSpeed", int(fanspeed))
             elif ("[Eco Mode]" in device.Name):
                 ecomode = (Level / 10) - 1
-                update_device_id(device.DeviceID, "ecoMode", int(ecomode))
+                update_device_id(device.DeviceID, "eco", int(ecomode))
             elif ("[Air Swing]" in device.Name):
                 airswing = (Level / 10) - 1
-                update_device_id(device.DeviceID, "airSwingUD", int(airswing))
+                update_device_id(device.DeviceID, "airSwingVertical", int(airswing))
             device.Update(nValue=p.powerOn, sValue=str(Level))
+
+def get_device_hash_guid(device_id):
+    for key, value in config.client._device_indexer.items():
+        if value == device_id:
+            matching_key = key
+            break
+    return matching_key

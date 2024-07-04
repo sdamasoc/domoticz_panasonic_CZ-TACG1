@@ -2,11 +2,11 @@
 update_interval = None
 debug_level = None
 api_version = None
-token = None
 aquarea_token = None
 username = None
 password = None
 devices = None
+client = None
 
 # constants
 appstore_url = 'https://apps.apple.com/app/panasonic-comfort-cloud/id1348640525'

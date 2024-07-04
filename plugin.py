@@ -45,7 +45,7 @@ import config
 import common
 import os
 # to test locally uncomment this line, rename .Domoticz.py to Domoticz.py and set your cvredentials in Domoticz.py
-# from Domoticz import Parameters, Devices
+from Domoticz import Parameters, Devices
 
 class PanasonicCZTACG1Plugin:
     enabled = True
@@ -67,7 +67,7 @@ class PanasonicCZTACG1Plugin:
         Domoticz.Debug("onStart called")
         # 1st try to get last version of the plugin
         config.api_version = common.get_app_version()
-        config.token = accsmart.get_token()
+        config.client = accsmart.get_client()
         config.aquarea_token = aquarea.get_aquarea_token()
 
         if config.debug_level == "Debug":
@@ -78,7 +78,8 @@ class PanasonicCZTACG1Plugin:
             Domoticz.Debugging(2)
 
         # get devices list
-        panasonic_devices = accsmart.get_devices()
+        panasonic_devices = config.client._groups
+        Domoticz.Debug(f"panasonic_devices={panasonic_devices}")
 
         # loop found devices to create then in domoticz
         nbdevices = len(config.devices)  # (nbdevices:=nbdevices+1) = ++nbdevices
