@@ -8,7 +8,7 @@ import string
 import time
 import urllib
 
-import aiofiles
+#import aiofiles
 import requests
 from bs4 import BeautifulSoup
 
@@ -63,19 +63,19 @@ class PanasonicSession:
         self._raw = raw
 
     def start_session(self):
-        if os.path.exists(self._token_file_name):
+#        if os.path.exists(self._token_file_name):
             # we logged in at least once before
             # check if the token is still ok, if not, get a new one
-            self._load_token_from_file()
-            if not self._check_token_is_valid():
-                self._refresh_token()
-        else:
+#            self._load_token_from_file()
+#            if not self._check_token_is_valid():
+#                self._refresh_token()
+#        else:
             # first login, get a new token
-            self._get_new_token()
+        self._get_new_token()
 
-    async def _load_token_from_file(self):
-        async with aiofiles.open(self._token_file_name, "r") as token_file:
-            self._token = json.load(token_file.buffer)
+#    async def _load_token_from_file(self):
+#        async with aiofiles.open(self._token_file_name, "r") as token_file:
+#            self._token = json.load(token_file.buffer)
 
     def _check_token_is_valid(self):
         now = datetime.datetime.now()
@@ -277,7 +277,7 @@ class PanasonicSession:
             "scope": token_response["scope"]
         }
 
-        self._update_token_file()
+#        self._update_token_file()
 
     def stop_session(self):
         response = requests.post(
@@ -324,11 +324,11 @@ class PanasonicSession:
             "scope": token_response["scope"]
         }
 
-        self._update_token_file()
+#        self._update_token_file()
 
-    async def _update_token_file(self):
-        async with aiofiles.open(self._token_file_name, "w") as token_file:
-            json.dump(self._token, token_file, indent=4)
+#    async def _update_token_file(self):
+#        async with aiofiles.open(self._token_file_name, "w") as token_file:
+#            json.dump(self._token, token_file, indent=4)
 
     def _get_header_for_api_calls(self):
         now = datetime.datetime.now()
