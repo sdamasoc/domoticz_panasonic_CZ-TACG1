@@ -45,7 +45,7 @@ import config
 import common
 import os
 # to test locally uncomment this line, rename .Domoticz.py to Domoticz.py and set your cvredentials in Domoticz.py
-from Domoticz import Parameters, Devices
+# from Domoticz import Parameters, Devices
 
 class PanasonicCZTACG1Plugin:
     enabled = True

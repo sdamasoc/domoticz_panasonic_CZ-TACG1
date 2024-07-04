@@ -50,7 +50,7 @@ def update_device_id(device_id, parameter_name, parameter_value):
     #Domoticz.Log(f"payload={payload} url={config.client._get_device_status_control_url()}")
     #response = config.client.execute_post(config.client._get_device_status_control_url(), payload, "set_device", 200)
 
-    Domoticz.Log("update_device_id={res}")
+    Domoticz.Log(f"update_device_id={res}")
     return res
 
 def handle_response(response, retry_func):
