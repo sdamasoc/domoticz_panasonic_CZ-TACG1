@@ -145,7 +145,7 @@ class ApiClient(panasonicsession.PanasonicSession):
                     parameters['nanoe'] = value.value
 
                 else:
-                    parameters[key] = value.value
+                    parameters[key] = value
 
         # routine to set the auto mode of fan (either horizontal, vertical, both or disabled)
         if air_x is not None or air_y is not None:
