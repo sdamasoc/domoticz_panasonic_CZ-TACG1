@@ -188,26 +188,26 @@ def handle_accsmart(device, devicejson):
 
 def update_accsmart(p, Command, Level, device):
     if (Command == "On"):
-        update_device_id(device.DeviceID, "power", pcomfortcloud.constants.Power.On)
+        update_device_id(device.DeviceID, "operate", 1)
         device.Update(nValue=1, sValue="100")
         p.powerOn = 1
     elif (Command == "Off"):
-        update_device_id(device.DeviceID, "power", pcomfortcloud.constants.Power.Off)
+        update_device_id(device.DeviceID, "operate", 0)
         device.Update(nValue=0, sValue="0")
         p.powerOn = 0
     elif (Command == "Set Level"):
         if (device.nValue != p.powerOn or (device.sValue != Level) and Level != "--"):
             if ("[Target temp]" in device.Name):
-                update_device_id(device.DeviceID, "temperature", float(Level))
+                update_device_id(device.DeviceID, "temperatureSet", float(Level))
             if ("[Mode]" in device.Name):
                 operationmode = (Level / 10) - 1
-                update_device_id(device.DeviceID, "mode", int(operationmode))
+                update_device_id(device.DeviceID, "operationMode", int(operationmode))
             elif ("[Fan Speed]" in device.Name):
                 fanspeed = (Level / 10) - 1
                 update_device_id(device.DeviceID, "fanSpeed", int(fanspeed))
             elif ("[Eco Mode]" in device.Name):
                 ecomode = (Level / 10) - 1
-                update_device_id(device.DeviceID, "eco", int(ecomode))
+                update_device_id(device.DeviceID, "ecoMode", int(ecomode))
             elif ("[Air Swing]" in device.Name):
                 airswing = (Level / 10) - 1
                 update_device_id(device.DeviceID, "airSwingVertical", int(airswing))
