@@ -121,28 +121,31 @@ class ApiClient(panasonicsession.PanasonicSession):
                 if key == 'power' and isinstance(value, constants.Power):
                     parameters['operate'] = value.value
 
-                if key == 'temperature':
+                elif key == 'temperature':
                     parameters['temperatureSet'] = value
 
-                if key == 'mode' and isinstance(value, constants.OperationMode):
+                elif key == 'mode' and isinstance(value, constants.OperationMode):
                     parameters['operationMode'] = value.value
 
-                if key == 'fanSpeed' and isinstance(value, constants.FanSpeed):
+                elif key == 'fanSpeed' and isinstance(value, constants.FanSpeed):
                     parameters['fanSpeed'] = value.value
 
-                if key == 'airSwingHorizontal' and isinstance(value, constants.AirSwingLR):
+                elif key == 'airSwingHorizontal' and isinstance(value, constants.AirSwingLR):
                     air_x = value
 
-                if key == 'airSwingVertical' and isinstance(value, constants.AirSwingUD):
+                elif key == 'airSwingVertical' and isinstance(value, constants.AirSwingUD):
                     air_y = value
 
-                if key == 'eco' and isinstance(value, constants.EcoMode):
+                elif key == 'eco' and isinstance(value, constants.EcoMode):
                     parameters['ecoMode'] = value.value
 
-                if key == 'nanoe' and \
+                elif key == 'nanoe' and \
                         isinstance(value, constants.NanoeMode) and \
                         value != constants.NanoeMode.Unavailable:
                     parameters['nanoe'] = value.value
+
+                else:
+                    parameters[key] = value.value
 
         # routine to set the auto mode of fan (either horizontal, vertical, both or disabled)
         if air_x is not None or air_y is not None:
