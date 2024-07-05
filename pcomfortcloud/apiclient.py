@@ -183,14 +183,12 @@ class ApiClient(panasonicsession.PanasonicSession):
                 parameters['fanAutoMode'] = constants.AirSwingAutoMode.Disabled.value
 
         device_guid = self._device_indexer.get(device_id)
-        print(f"in set_device device_id={device_id} and device_guid={device_guid}")
-        print(f"in set_device self._device_indexer={self._device_indexer}")
         if device_guid:
             payload = {
                 "deviceGuid": device_guid,
                 "parameters": parameters
             }
-            print(f"payload in set_device={payload}")
+            print(f"set_device: device_guid={device_guid} payload in set_device={payload}")
             _ = self.execute_post(self._get_device_status_control_url(), payload, "set_device", 200)
             return True
         return False

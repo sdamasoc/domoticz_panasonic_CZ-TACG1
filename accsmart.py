@@ -131,7 +131,7 @@ def add_device(devicename, deviceid, nbdevices):
     Domoticz.Device(Name=devicename + "[Eco Mode]", Unit=nbdevices, TypeName="Selector Switch", Image=7, Options=Options, Used=1, DeviceID=deviceid).Create()
 
     # airSwingUD => 0,3,2,4,1 (weird)
-    Options = {"LevelActions": "|||||||", "LevelNames": "Up|Down|Mid|UpMid|DownMid", "LevelOffHidden": "true", "SelectorStyle": "1"}
+    Options = {"LevelActions": "|||||||||", "LevelNames": "Auto|Up|Down|Mid|UpMid|DownMid|Swing", "LevelOffHidden": "true", "SelectorStyle": "1"}
     nbdevices = nbdevices + 1
     Domoticz.Device(Name=devicename + "[Air Swing]", Unit=nbdevices, TypeName="Selector Switch", Image=7, Options=Options, Used=1, DeviceID=deviceid).Create()
     
@@ -170,10 +170,10 @@ def handle_accsmart(device, devicejson):
         value = str((fanspeed + 1) * 10)
     elif ("[Eco Mode]" in device.Name):
         ecomode = int(devicejson['parameters']['ecoMode'])
-        value = str((ecomode + 1) * 10)
+        value = str(ecomode)
     elif ("[Air Swing]" in device.Name):
         airswing = int(devicejson['parameters']['airSwingUD'])
-        value = str((airswing + 1) * 10)
+        value = str(airswing -1)
     elif ("[Energy]" in device.Name):
         value = get_historic_data(device.DeviceID) # historic data is in kWh, domoticz wants W
         if value.startswith('-255'):
@@ -209,7 +209,7 @@ def update_accsmart(p, Command, Level, device):
                 ecomode = (Level / 10) - 1
                 update_device_id(device.DeviceID, "ecoMode", int(ecomode))
             elif ("[Air Swing]" in device.Name):
-                airswing = (Level / 10) - 1
+                airswing = (Level - 1)
                 update_device_id(device.DeviceID, "airSwingVertical", int(airswing))
             device.Update(nValue=p.powerOn, sValue=str(Level))
 
