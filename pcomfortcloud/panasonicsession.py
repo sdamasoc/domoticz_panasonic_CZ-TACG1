@@ -12,6 +12,8 @@ import urllib
 import requests
 from bs4 import BeautifulSoup
 
+import config
+
 from . import exceptions
 
 
@@ -274,7 +276,7 @@ class PanasonicSession:
                 "X-APP-NAME": "Comfort Cloud",
                 "X-APP-TIMESTAMP": timestamp,
                 "X-APP-TYPE": "1",
-                "X-APP-VERSION": PanasonicSession.X_APP_VERSION,
+                "X-APP-VERSION": config.api_version,
                 "X-CFC-API-KEY": get_api_key(timestamp, token_response["access_token"]),
                 "X-User-Authorization-V2": "Bearer " + token_response["access_token"]
             },
@@ -358,7 +360,7 @@ class PanasonicSession:
             "User-Agent": "G-RAC",
             "X-APP-TIMESTAMP": timestamp,
             "X-APP-TYPE": "1",
-            "X-APP-VERSION": PanasonicSession.X_APP_VERSION,
+            "X-APP-VERSION": config.api_version,
             # Seems to work by either setting X-CFC-API-KEY to 0 or to a 128-long hex string
             # "X-CFC-API-KEY": "0",
             "X-CFC-API-KEY": get_api_key(timestamp, self._token["access_token"]),
