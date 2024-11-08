@@ -33,7 +33,7 @@
                 <option label="False" value="Normal"  default="true" />
             </options>
         </param>
-        <param field="Mode3" label="API Version" width="60px" required="true" default="1.20.1"/>
+        <param field="Mode3" label="API Version" width="60px" required="true" default="1.22.0"/>
     </params>
 </plugin>
 """

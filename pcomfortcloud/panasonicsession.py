@@ -18,9 +18,28 @@ from . import exceptions
 def generate_random_string(length):
     return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(length))
 
+def get_api_key(timestamp, token):
+    try:
+        date = datetime.datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+        timestamp_ms = str(int(date.replace(tzinfo=datetime.timezone.utc).timestamp() * 1000))
 
-def generate_random_string_hex(length):
-    return ''.join(random.choice(string.hexdigits) for _ in range(length))
+        components = [
+            'Comfort Cloud'.encode('utf-8'),
+            '521325fb2dd486bf4831b47644317fca'.encode('utf-8'),
+            timestamp_ms.encode('utf-8'),
+            'Bearer '.encode('utf-8'),
+            token.encode('utf-8')
+        ]
+
+        input_buffer = b''.join(components)
+        hash_obj = hashlib.sha256()
+        hash_obj.update(input_buffer)
+        hash_str = hash_obj.hexdigest()
+
+        result = hash_str[:9] + 'cfc' + hash_str[9:]
+        return result
+    except Exception as ex:
+        print("Failed to generate API key")
 
 
 def check_response(response, function_description, expected_status):
@@ -256,7 +275,7 @@ class PanasonicSession:
                 "X-APP-TIMESTAMP": timestamp,
                 "X-APP-TYPE": "1",
                 "X-APP-VERSION": PanasonicSession.X_APP_VERSION,
-                "X-CFC-API-KEY": generate_random_string_hex(128),
+                "X-CFC-API-KEY": get_api_key(timestamp, token_response["access_token"]),
                 "X-User-Authorization-V2": "Bearer " + token_response["access_token"]
             },
             json={

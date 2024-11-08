@@ -4,7 +4,7 @@
 Parameters = {
         "Mode1": 60,
         "Mode2": "Debug",
-        "Mode3": "1.20.1",
+        "Mode3": "1.22.0",
         "Username": "<YOUR_USERNAME>",
         "Password": "<YOUR_PASSWORD>"
     }
