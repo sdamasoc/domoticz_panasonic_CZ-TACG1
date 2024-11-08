@@ -66,7 +66,7 @@ class PanasonicCZTACG1Plugin:
 
         Domoticz.Debug("onStart called")
         # 1st try to get last version of the plugin
-        config.api_version = common.get_app_version()
+        config.api_version = common.get_app_version(True)
         config.client = accsmart.get_client()
         config.aquarea_token = aquarea.get_aquarea_token()
 

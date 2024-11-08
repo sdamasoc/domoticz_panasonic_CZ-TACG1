@@ -16,7 +16,11 @@ def get_date():
     return f"{datetime.now().strftime('%Y%m%d')}"
 
 # call app store to get latest version
-def get_app_version():
+def get_app_version(first_time=False):
+    if first_time and os.path.exists(config.api_version_file_path):
+        os.remove(config.api_version_file_path)
+        print(f"{config.api_version_file_path} has been deleted.")
+
     version = config.api_version
     # if api_version_file_path already exist reuse it
     if os.path.exists(config.api_version_file_path):
