@@ -63,7 +63,7 @@ class PanasonicSession:
     REDIRECT_URI = "panasonic-iot-cfc://authglb.digital.panasonic.com/android/com.panasonic.ACCsmart/callback"
     BASE_PATH_AUTH = "https://authglb.digital.panasonic.com"
     BASE_PATH_ACC = "https://accsmart.panasonic.com"
-    X_APP_VERSION = "1.21.0"
+    X_APP_VERSION = "1.22.0"
 
     # token:
     # - access_token
@@ -361,7 +361,7 @@ class PanasonicSession:
             "X-APP-VERSION": PanasonicSession.X_APP_VERSION,
             # Seems to work by either setting X-CFC-API-KEY to 0 or to a 128-long hex string
             # "X-CFC-API-KEY": "0",
-            "X-CFC-API-KEY": generate_random_string_hex(128),
+            "X-CFC-API-KEY": get_api_key(timestamp, self._token["access_token"]),
             "X-Client-Id": self._token["acc_client_id"],
             "X-User-Authorization-V2": "Bearer " + self._token["access_token"]
         }
